@@ -109,6 +109,8 @@ def main() -> None:
     ap.add_argument("--report", required=True, type=Path)
     args = ap.parse_args()
 
+    if args.output.resolve() == args.boot.resolve():
+        raise ValueError("Output must not overwrite the original boot image")
     manifest = json.loads(args.manifest.read_text())
     boot = args.boot.read_bytes()
     kernel = args.kernel.read_bytes()
@@ -230,11 +232,11 @@ def main() -> None:
     new_embedded_vbmeta, embedded_report = replace_boot_hash_descriptor(embedded_vbmeta, bytes(body))
     new_footer = struct.pack(">4sIIQQQ28s", b"AVBf", 1, 0, len(body), len(body),
                              len(new_embedded_vbmeta), bytes(28))
-    final_size = len(body) + len(new_embedded_vbmeta) + (len(boot) - len(body) - len(new_embedded_vbmeta) - 64) + 64
-    if final_size != len(boot):
-        raise AssertionError("Output boot partition size mismatch")
+    padding_size = len(boot) - len(body) - len(new_embedded_vbmeta) - 64
+    if padding_size < 0:
+        raise ValueError("Repacked payload plus AVB metadata exceeds original boot partition")
     candidate = bytes(body) + new_embedded_vbmeta
-    candidate += bytes(len(boot) - len(candidate) - 64)
+    candidate += bytes(padding_size)
     candidate += new_footer
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(candidate)
@@ -267,6 +269,8 @@ def main() -> None:
     out_dtb_size = struct.unpack_from("<I", out, 1648)[0]
     if out_kernel_size != len(kernel) or out_ramdisk_size != ramdisk_size or out_dtb_size != dtb_size:
         raise ValueError("Repacked header component sizes do not match payloads")
+    if out[page_size:page_size + len(kernel)] != kernel:
+        raise ValueError("Repacked kernel payload differs from CI Image.gz")
     out_ro = align(page_size + out_kernel_size, page_size)
     out_dtb_off = align(out_ro + out_ramdisk_size, page_size)
     if out[out_ro:out_ro + ramdisk_size] != ramdisk or out[out_dtb_off:out_dtb_off + dtb_size] != dtb_blob:
