@@ -54,8 +54,8 @@ mmu = (kernel / names[1]).read_text()
 assert mmu.count("#include <linux/mm_inline.h>\n#include <linux/ctype.h>\n") == 1
 patch = replace_file_hunk(
     patch, names[1],
-    " #include <linux/mm_inline.h>\n \n",
-    " #include <linux/mm_inline.h>\n #include <linux/ctype.h>\n \n",
+    "+#endif\n \n #include <asm/elf.h>\n",
+    "+#endif\n #include <linux/ctype.h>\n \n #include <asm/elf.h>\n",
     "@@ -19,6 +19,9 @@", 6, 9,
 )
 output = root / "audit/susfs-4.14-atoll.patch"
