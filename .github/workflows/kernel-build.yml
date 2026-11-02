@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: RMX2170 ARM64 — build and audit
@@ -20,6 +24,8 @@ jobs:
       KSU_SHA: f28feddf9e02ce10548a1e0ed6d15a3a3f5733dc
       SUSFS_REPO: https://github.com/kutemeikito/susfs4ksu.git
       SUSFS_SHA: 77905b5a071e6f3669e3b1814cea30147c0801da
+      CLANG_URL: https://github.com/SA9990/Toolchain/releases/download/clang-r563880c/clang-r563880c.tar.gz
+      CLANG_SHA256: 57b456636aa9c3f5e159bc1dd6eddd7c6de654281cad84376e408a5d35f91bab
     steps:
       - name: Checkout project
         uses: actions/checkout@v4
@@ -27,9 +33,40 @@ jobs:
       - name: Install build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential git python3 bc bison flex libssl-dev libelf-dev libncurses-dev             clang-18 lld-18 llvm-18 llvm-18-tools gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu             ccache rsync pahole device-tree-compiler gzip xz-utils zip unzip
-          clang-18 --version
-          ld.lld-18 --version
+          sudo apt-get install -y build-essential git python3 bc bison flex libssl-dev libelf-dev libncurses-dev             curl ca-certificates tar gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu             ccache rsync pahole device-tree-compiler gzip xz-utils zip unzip
+          df -h "$GITHUB_WORKSPACE"
+
+      - name: Restore pinned Android Clang 21 cache
+        id: clang-cache
+        uses: actions/cache@v4
+        with:
+          path: toolchain
+          key: android-clang-r563880c-linux-x86_64-v1
+
+      - name: Download and verify original Android Clang 21 toolchain
+        if: steps.clang-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 5 --retry-delay 3 "$CLANG_URL" -o /tmp/clang-r563880c.tar.gz
+          echo "$CLANG_SHA256  /tmp/clang-r563880c.tar.gz" | sha256sum --check -
+          mkdir -p toolchain
+          tar -xzf /tmp/clang-r563880c.tar.gz -C toolchain
+          rm -f /tmp/clang-r563880c.tar.gz
+
+      - name: Verify exact compiler and LLVM binutils
+        run: |
+          set -euo pipefail
+          CLANG_PATH="$(find -L toolchain -name clang -type f -print -quit)"
+          test -n "$CLANG_PATH"
+          CLANG_BIN="$(dirname "$CLANG_PATH")"
+          for tool in clang clang++ ld.lld llvm-ar llvm-nm llvm-objcopy llvm-objdump llvm-strip; do
+            test -x "$CLANG_BIN/$tool" || { echo "Missing tool: $tool"; exit 1; }
+          done
+          "$CLANG_BIN/clang" --version | tee audit-clang-version.txt
+          grep -q '21.0.0' audit-clang-version.txt
+          echo "CLANG_BIN=$CLANG_BIN" >> "$GITHUB_ENV"
+          echo "$CLANG_BIN" >> "$GITHUB_PATH"
+          echo "Verified compiler directory: $CLANG_BIN"
 
       - name: Fetch exact kernel, KernelSU Next and SUSFS revisions
         run: |
