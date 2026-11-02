@@ -58,7 +58,7 @@ jobs:
           set -euo pipefail
           CLANG_PATH="$(find -L toolchain -name clang -type f -print -quit)"
           test -n "$CLANG_PATH"
-          CLANG_BIN="$(dirname "$CLANG_PATH")"
+          CLANG_BIN="$(cd "$(dirname "$CLANG_PATH")" && pwd)"
           for tool in clang clang++ ld.lld llvm-ar llvm-nm llvm-objcopy llvm-objdump llvm-strip; do
             test -x "$CLANG_BIN/$tool" || { echo "Missing tool: $tool"; exit 1; }
           done
