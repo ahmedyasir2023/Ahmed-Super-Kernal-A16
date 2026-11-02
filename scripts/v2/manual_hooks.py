@@ -84,14 +84,23 @@ extern bool ksu_vfs_read_hook;
 extern void ksu_handle_sys_read(unsigned int fd);
 #endif
 SYSCALL_DEFINE3(read, unsigned int, fd, char __user *, buf, size_t, count)""")
-insert("fs/read_write.c",
-       "\tssize_t ret = -EBADF;\n#if defined(OPLUS_FEATURE_IOMONITOR)",
-       """\tssize_t ret = -EBADF;
+# The vendor uses this same OPLUS read-time snippet in multiple syscalls.
+# Scope the insertion strictly to the read() syscall body.
+path = base / "fs/read_write.c"
+s = path.read_text()
+a = s.index("SYSCALL_DEFINE3(read, unsigned int, fd, char __user *, buf, size_t, count)")
+b = s.index("SYSCALL_DEFINE3(write, unsigned int, fd,", a)
+block = s[a:b]
+needle = "\\tssize_t ret = -EBADF;\\n#if defined(OPLUS_FEATURE_IOMONITOR)"
+replacement = """\\tssize_t ret = -EBADF;
 #ifdef CONFIG_KSU_MANUAL_HOOK
-\tif (unlikely(ksu_vfs_read_hook))
-\t\tksu_handle_sys_read(fd);
+\\tif (unlikely(ksu_vfs_read_hook))
+\\t\\tksu_handle_sys_read(fd);
 #endif
-#if defined(OPLUS_FEATURE_IOMONITOR)""")
+#if defined(OPLUS_FEATURE_IOMONITOR)"""
+assert block.count(needle) == 1, "Unable to locate exact read() entry"
+path.write_text(s[:a] + block.replace(needle, replacement, 1) + s[b:])
+
 
 insert("fs/stat.c",
        "#if !defined(__ARCH_WANT_STAT64) || defined(__ARCH_WANT_SYS_NEWFSTATAT)\nSYSCALL_DEFINE4(newfstatat",
