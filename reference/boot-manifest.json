@@ -1,7 +1,7 @@
 {
   "device": "Realme 7 Pro RMX2170",
   "rom": "EvolutionX-16.0-20261102-RMX2170",
-  "source": "User-uploaded partial ROM ZIP; boot images are not stored in the repository",
+  "source": "User-uploaded partial ROM ZIP; original boot images are not stored in this repository",
   "kernel_release": "4.14.336",
   "boot": {
     "filename": "boot.img",
@@ -9,14 +9,59 @@
     "sha256": "4101a2db9a8fdc388f44a3ce4a23c14b2a856c5a902126513624b9c6c4db2653",
     "magic": "ANDROID!",
     "header_version": 2,
+    "header_size": 1660,
     "page_size": 4096,
+    "kernel_offset": 4096,
     "kernel_size": 19590365,
+    "kernel_sha256": "73bcbe11d4055b3b552914dc21423aad6c26b833fbb9449fe9dd26a3ee583f0c",
+    "ramdisk_offset": 19595264,
     "ramdisk_size": 1581241,
+    "ramdisk_sha256": "9907076b0a45ce9afc1fb950d42f860e29e25f02cea3172e3dda288c406bf923",
+    "dtb_offset": 21180416,
     "dtb_size": 2775467,
+    "dtb_address": "0x01f00000",
+    "dtb_blob_sha256": "212d8e40f9d3025c92f1c11c2dc40761820dc5310c41bafbc48a88bd39d23af8",
     "kernel_compression": "gzip",
     "unpacked_kernel_size": 50341960,
     "compiler": "Android clang 21.0.0 r563880c"
   },
+  "original_boot_dtbs": [
+    {
+      "path": "19721/atoll-ab.dtb",
+      "size": 393663,
+      "sha256": "0711655f564a5d3db0e327f0797343b8b9d20d49118a10e6ef06194d7f271dcc"
+    },
+    {
+      "path": "19721/atollp.dtb",
+      "size": 393674,
+      "sha256": "ce4c46a83ccf9216e976ff75e6472519ce2fbd54d71fa29e0d56b0dbedee1e9b"
+    },
+    {
+      "path": "19771/sdmmagpie.dtb",
+      "size": 406042,
+      "sha256": "14cfd64c218b96333289aab4f4cc1516479865a0284dbeccc7599973d6c89ecc"
+    },
+    {
+      "path": "206B1/atoll-ab.dtb",
+      "size": 393469,
+      "sha256": "28db6864c9dbc26c91a8a50e54c6e9749c4f251051ed1b31e9ae642a8ab30f98"
+    },
+    {
+      "path": "206B1/atollp.dtb",
+      "size": 393480,
+      "sha256": "0288ac31905e72168035bf7e6c3df4124e57458dbe87e77fd2cc3222ff2a7123"
+    },
+    {
+      "path": "20711/atoll-ab.dtb",
+      "size": 397564,
+      "sha256": "d80bb543c49504f616f0310514e46f5b856d388204f3569021fb3099cc885339"
+    },
+    {
+      "path": "20711/atollp.dtb",
+      "size": 397575,
+      "sha256": "f8f3bef3bf273addefc236805a9606810af24eb21121184e852ea25b4db18753"
+    }
+  ],
   "dtbo": {
     "filename": "dtbo.img",
     "bytes": 25165824,
@@ -31,5 +76,24 @@
     "filename": "vbmeta_system.img",
     "bytes": 4096,
     "sha256": "ac5372cf528c85d698baa4bf6c98cde09368ec4306909fc123a9227dc9deb7ee"
+  },
+  "successful_ci_build": {
+    "workflow_run_id": 41515580824,
+    "project_commit": "85dc690ddaee947187f356e40ba2841a280f8efd",
+    "kernel_source_commit": "10380039ddcd6ead841e1fc4ca744a2dd6e92fb8",
+    "kernelsu_next_commit": "f28feddf9e02ce10548a1e0ed6d15a3a3f5733dc",
+    "susfs_commit": "77905b5a071e6f3669e3b1814cea30147c0801da",
+    "compiler": "Ubuntu clang 18.1.3 (1ubuntu1), Ubuntu LLD 18.1.3",
+    "image_gz_size": 19701809,
+    "image_gz_sha256": "e904ae62734606699160d3c6474c46d2e43f77c2ff48aaecd4ae5fbd24cdcfb5",
+    "image_uncompressed_size": 50358288
+  },
+  "static_validation": {
+    "generated_dtbs_match_original_boot_dtbs_byte_for_byte": true,
+    "dtb_count": 7,
+    "device_driver_source_files_modified": false,
+    "boot_image_repacked": false,
+    "flashable_zip_created": false,
+    "physical_device_boot_test": false
   }
 }
