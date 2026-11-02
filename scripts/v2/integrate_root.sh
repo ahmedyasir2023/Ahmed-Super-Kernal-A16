@@ -19,6 +19,9 @@ python3 "$ROOT/scripts/v2/manual_hooks.py"
 python3 "$ROOT/scripts/prepare_ksu_legacy.py"
 # Namespace helper may be already present due to earlier prep.
 grep -q 'int path_umount(struct path \*path, int flags)' "$K/fs/namespace.c"
-grep -q 'CONFIG_KSU' "$KS/kernel/Kconfig"
+grep -Eq '^[[:space:]]*config KSU
+git -C "$K" diff --stat > "$ROOT/audit/patch-stat.txt"
+echo "Modern official KSU manual hooks installed. SUSFS NOT enabled in this root-only baseline."
+ "$KS/kernel/Kconfig"
 git -C "$K" diff --stat > "$ROOT/audit/patch-stat.txt"
 echo "Modern official KSU manual hooks installed. SUSFS NOT enabled in this root-only baseline."
