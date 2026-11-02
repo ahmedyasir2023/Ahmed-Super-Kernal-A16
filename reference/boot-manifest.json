@@ -78,22 +78,51 @@
     "sha256": "ac5372cf528c85d698baa4bf6c98cde09368ec4306909fc123a9227dc9deb7ee"
   },
   "successful_ci_build": {
-    "workflow_run_id": 41515580824,
-    "project_commit": "85dc690ddaee947187f356e40ba2841a280f8efd",
+    "workflow_run_id": 41523297720,
+    "project_commit": "5eff2fb8773483304af3f914b2375ab2e1289ed8",
     "kernel_source_commit": "10380039ddcd6ead841e1fc4ca744a2dd6e92fb8",
     "kernelsu_next_commit": "f28feddf9e02ce10548a1e0ed6d15a3a3f5733dc",
     "susfs_commit": "77905b5a071e6f3669e3b1814cea30147c0801da",
-    "compiler": "Ubuntu clang 18.1.3 (1ubuntu1), Ubuntu LLD 18.1.3",
-    "image_gz_size": 19701809,
-    "image_gz_sha256": "e904ae62734606699160d3c6474c46d2e43f77c2ff48aaecd4ae5fbd24cdcfb5",
-    "image_uncompressed_size": 50358288
+    "compiler": "Android clang 21.0.0 (based on r563880c)",
+    "image_gz_size": 19651503,
+    "image_gz_sha256": "559963709e0c63bdc388b049c300c9a4800ea35c4bdf7f09eddff49ee4198b4f",
+    "image_uncompressed_size": 50358344
   },
   "static_validation": {
     "generated_dtbs_match_original_boot_dtbs_byte_for_byte": true,
     "dtb_count": 7,
     "device_driver_source_files_modified": false,
-    "boot_image_repacked": false,
-    "flashable_zip_created": false,
-    "physical_device_boot_test": false
+    "kernel_release": "4.14.336",
+    "kernelsu_next_configured_and_compiled": true,
+    "susfs_configured_and_compiled": true,
+    "boot_image_repacked_for_offline_structure_test": true,
+    "original_ramdisk_preserved": true,
+    "original_dtb_blob_preserved": true,
+    "embedded_avb_footer_hash_verified": true,
+    "external_vbmeta_signature_verified": true,
+    "physical_device_boot_test": false,
+    "flashable_zip_created": false
+  },
+  "boot_structure_test": {
+    "status": "non-flashable offline structure test only",
+    "filename": "A16-RMX2170-BOOT-STRUCTURE-TEST-CLANG21-NOT-FOR-FLASHING.img",
+    "bytes": 67108864,
+    "sha256": "74bf6e09336786aa97fba194f568af42959257436338135b5ff10b5145805522",
+    "kernel_payload_size": 19651503,
+    "new_ramdisk_offset": 19656704,
+    "new_dtb_offset": 21241856,
+    "pre_vbmeta_image_size": 24018944,
+    "original_ramdisk_preserved": true,
+    "original_dtb_blob_preserved": true,
+    "individual_original_dtbs_match_byte_for_byte": 7,
+    "embedded_avb_footer_hash_recalculated_and_verified": true,
+    "external_vbmeta_signature_verified": "SHA256_RSA4096",
+    "external_vbmeta_system_signature_verified": "SHA256_RSA4096",
+    "external_vbmeta_system_chain_public_key_matches": true,
+    "external_vbmeta_flags": "0x00000003",
+    "external_vbmeta_boot_descriptor_matches_candidate": false,
+    "physical_device_boot_test": false,
+    "avb_resigned": false,
+    "flashable_zip_created": false
   }
 }
