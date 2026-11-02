@@ -91,11 +91,11 @@ s = path.read_text()
 a = s.index("SYSCALL_DEFINE3(read, unsigned int, fd, char __user *, buf, size_t, count)")
 b = s.index("SYSCALL_DEFINE3(write, unsigned int, fd,", a)
 block = s[a:b]
-needle = "\\tssize_t ret = -EBADF;\\n#if defined(OPLUS_FEATURE_IOMONITOR)"
-replacement = """\\tssize_t ret = -EBADF;
+needle = "\tssize_t ret = -EBADF;\n#if defined(OPLUS_FEATURE_IOMONITOR)"
+replacement = """\tssize_t ret = -EBADF;
 #ifdef CONFIG_KSU_MANUAL_HOOK
-\\tif (unlikely(ksu_vfs_read_hook))
-\\t\\tksu_handle_sys_read(fd);
+\tif (unlikely(ksu_vfs_read_hook))
+\t\tksu_handle_sys_read(fd);
 #endif
 #if defined(OPLUS_FEATURE_IOMONITOR)"""
 assert block.count(needle) == 1, "Unable to locate exact read() entry"
