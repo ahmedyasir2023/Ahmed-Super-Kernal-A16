@@ -5,21 +5,34 @@ cd "$ROOT/kernel"
 export ARCH=arm64
 export CROSS_COMPILE=aarch64-linux-gnu-
 export CLANG_TRIPLE=aarch64-linux-gnu-
-export CC=clang-18
-export LD=ld.lld-18
-export AR=llvm-ar-18
-export NM=llvm-nm-18
-export OBJCOPY=llvm-objcopy-18
-export OBJDUMP=llvm-objdump-18
-export STRIP=llvm-strip-18
-export HOSTCC=clang-18
-export HOSTCXX=clang++-18
+: "${CLANG_BIN:?Pinned Android Clang 21 toolchain was not installed}"
+test -x "$CLANG_BIN/clang"
+test -x "$CLANG_BIN/ld.lld"
+export PATH="$CLANG_BIN:$PATH"
+export CC="$CLANG_BIN/clang"
+export LD="$CLANG_BIN/ld.lld"
+export AR="$CLANG_BIN/llvm-ar"
+export NM="$CLANG_BIN/llvm-nm"
+export OBJCOPY="$CLANG_BIN/llvm-objcopy"
+export OBJDUMP="$CLANG_BIN/llvm-objdump"
+export STRIP="$CLANG_BIN/llvm-strip"
+export HOSTCC="$CLANG_BIN/clang"
+export HOSTCXX="$CLANG_BIN/clang++"
+export HOSTLD="$CLANG_BIN/ld.lld"
 mkdir -p out
-# Command-line tool overrides are mandatory: legacy kernel Makefiles redefine CC.
-# Environment-only CC=clang is ignored by the recursive Kbuild invocation.
-TOOLCHAIN=(CC=clang-18 HOSTCC=clang-18 HOSTCXX=clang++-18
-           LD=ld.lld-18 AR=llvm-ar-18 NM=llvm-nm-18
-           OBJCOPY=llvm-objcopy-18 OBJDUMP=llvm-objdump-18 STRIP=llvm-strip-18)
+TOOLCHAIN=(
+  "CC=$CLANG_BIN/clang"
+  "HOSTCC=$CLANG_BIN/clang"
+  "HOSTCXX=$CLANG_BIN/clang++"
+  "HOSTLD=$CLANG_BIN/ld.lld"
+  "LD=$CLANG_BIN/ld.lld"
+  "AR=$CLANG_BIN/llvm-ar"
+  "NM=$CLANG_BIN/llvm-nm"
+  "OBJCOPY=$CLANG_BIN/llvm-objcopy"
+  "OBJDUMP=$CLANG_BIN/llvm-objdump"
+  "STRIP=$CLANG_BIN/llvm-strip"
+)
+"$CLANG_BIN/clang" --version
 make O=out "${TOOLCHAIN[@]}" atoll_defconfig
 scripts/config --file out/.config -e KPROBES -e EXT4_FS -e KSU -e KSU_SUSFS
 make O=out "${TOOLCHAIN[@]}" olddefconfig
