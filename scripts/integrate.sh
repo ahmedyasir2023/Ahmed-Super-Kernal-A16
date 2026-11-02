@@ -17,8 +17,9 @@ printf '\nsource "drivers/kernelsu/Kconfig"\n' >> "$K/drivers/Kconfig"
 cp -a "$SU/kernel_patches/fs/." "$K/fs/"
 cp -a "$SU/kernel_patches/include/." "$K/include/"
 cd "$K"
-git apply --check "$SU/kernel_patches/50_add_susfs_in_kernel-4.14.patch"
-git apply "$SU/kernel_patches/50_add_susfs_in_kernel-4.14.patch"
+python3 "$ROOT/scripts/port_susfs_patch.py"
+git apply --check "$ROOT/audit/susfs-4.14-atoll.patch"
+git apply "$ROOT/audit/susfs-4.14-atoll.patch"
 grep -q 'config KSU_SUSFS' "$KS/kernel/Kconfig"
 grep -q 'susfs.o' fs/Makefile
 grep -q 'source "drivers/kernelsu/Kconfig"' drivers/Kconfig
