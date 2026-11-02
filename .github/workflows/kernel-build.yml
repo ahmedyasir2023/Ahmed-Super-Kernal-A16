@@ -75,6 +75,7 @@ jobs:
             audit/build-report.txt
             audit/config.txt
             audit/patch-stat.txt
+            audit/boot-dtb-compatibility.txt
             kernel/out/arch/arm64/boot/Image.gz
             kernel/out/arch/arm64/boot/dts/**/*.dtb
             kernel/out/.config
