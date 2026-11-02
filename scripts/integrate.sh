@@ -8,7 +8,7 @@ mkdir -p "$ROOT/audit"
 test -d "$K/arch/arm64" && test -f "$KS/kernel/Kconfig"
 test -f "$SU/kernel_patches/50_add_susfs_in_kernel-4.14.patch"
 test -f "$SU/kernel_patches/fs/susfs.c"
-test -f "$KS/kernel/supercalls.c" || { echo "Review legacy KernelSU Next fork layout"; exit 1; }
+test -f "$KS/kernel/ksu.c" || { echo "Review legacy KernelSU Next fork layout"; exit 1; }
 # Link exact pinned KernelSU Next kernel directory into the stock drivers tree.
 ln -s ../../KernelSU-Next/kernel "$K/drivers/kernelsu"
 printf '\nobj-$(CONFIG_KSU) += kernelsu/\n' >> "$K/drivers/Makefile"
