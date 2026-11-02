@@ -1,0 +1,30 @@
+Ahmed Super Kernal A16 — BOOT STRUCTURE TEST (Clang 21 build)
+STATUS: NON-FLASHABLE. DO NOT FLASH OR INSTALL.
+CI run: 41523297720
+CI commit: 5eff2fb8773483304af3f914b2375ab2e1289ed8
+Original boot SHA-256: 4101a2db9a8fdc388f44a3ce4a23c14b2a856c5a902126513624b9c6c4db2653
+Repacked candidate SHA-256: 74bf6e09336786aa97fba194f568af42959257436338135b5ff10b5145805522
+Partition size: 67108864 bytes (unchanged)
+Boot header version/page size: 2/4096
+Kernel payload: 19651503 bytes; uncompressed 50358344 bytes
+Kernel release: Linux 4.14.336; ARM64 Image magic verified
+Kernel SHA-256: 559963709e0c63bdc388b049c300c9a4800ea35c4bdf7f09eddff49ee4198b4f
+Ramdisk: 1581241 bytes; byte-for-byte preserved: yes; SHA-256 9907076b0a45ce9afc1fb950d42f860e29e25f02cea3172e3dda288c406bf923
+DTB blob: 2775467 bytes; byte-for-byte preserved: yes; SHA-256 212d8e40f9d3025c92f1c11c2dc40761820dc5310c41bafbc48a88bd39d23af8
+Individual original DTBs: 7; all SHA-256/size/FDT checks passed
+New ramdisk offset: 19656704
+New DTB offset: 21241856
+New pre-vbmeta image size: 24018944
+Embedded AVB footer/hash descriptor: unsigned internal descriptor recalculated and independently verified (SHA-256)
+External vbmeta.img signature: valid SHA256_RSA4096 signature; authentication hash verified
+External vbmeta_system.img signature: valid SHA256_RSA4096 signature; authentication hash verified
+External vbmeta chain descriptor: public key matches vbmeta_system.img embedded public key
+External vbmeta flags: 0x00000003 (HASHTREE_DISABLED + VERIFICATION_DISABLED)
+External vbmeta boot hash descriptor: matches original boot, does not match this candidate
+AOSP libavb behavior: VERIFICATION_DISABLED means descriptors are not processed; device bootloader behavior still requires physical testing
+AVB signing/re-signing: NOT DONE (no private signing key supplied)
+Physical device boot test: NOT DONE
+Flashable ZIP: NOT CREATED
+
+This file is for offline Boot structure inspection only.
+Do not use fastboot, recovery, or any flashing tool with this image.
