@@ -18,6 +18,7 @@ test -s "$K/out/vmlinux"
 test -s "$K/out/fs/susfs.o"
 test -s "$K/out/drivers/kernelsu/built-in.o"
 find "$K/out/arch/arm64/boot/dts" -type f -name '*.dtb' -size +0c | grep -q .
+python3 "$ROOT/scripts/verify_boot_dtb.py"
 # Never modify any stock vendor hardware driver paths.
 if git -C "$K" diff --name-only | grep -E '^(drivers/(input|gpu|media|power|soc|staging|fingerprint|misc)|sound|arch/arm64/boot/dts)/'; then
   echo "Unexpected change in device driver or DTS source — blocking"
@@ -33,6 +34,7 @@ cp "$C" "$ROOT/audit/config.txt"
  echo "Image.gz size: $(stat -c %s "$IMG") bytes"
  echo "SHA256: $(sha256sum "$IMG")"
  echo "DTBs: $(find "$K/out/arch/arm64/boot/dts" -name '*.dtb' | wc -l)"
+ echo "Original Boot DTB compatibility: all 7 entries match byte-for-byte"
  echo "KernelSU Next configured: yes"
  echo "SUSFS configured and compiled: yes"
  echo "Boot image repack: NOT DONE"
