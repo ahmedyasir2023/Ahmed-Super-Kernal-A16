@@ -16,6 +16,17 @@ printf '\nsource "drivers/kernelsu/Kconfig"\n' >> "$K/drivers/Kconfig"
 # Copy the 4.14 SUSFS support files, then require exact patch application.
 cp -a "$SU/kernel_patches/fs/." "$K/fs/"
 cp -a "$SU/kernel_patches/include/." "$K/include/"
+# SUSFS legacy 4.14 has a signed 64-bit spoofed_size printed with %u.
+# Correct the format in the copied SUSFS file without editing vendor sources.
+python3 - <<'PY'
+from pathlib import Path
+p = Path("kernel/fs/susfs.c")
+s = p.read_text()
+old = "spoofed_size: '%u'"
+new = "spoofed_size: '%lld'"
+assert s.count(old) == 2, "unexpected legacy SUSFS source, needs review"
+p.write_text(s.replace(old, new))
+PY
 cd "$K"
 python3 "$ROOT/scripts/port_susfs_patch.py"
 git apply --check "$ROOT/audit/susfs-4.14-atoll.patch"
