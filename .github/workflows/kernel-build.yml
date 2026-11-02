@@ -1,0 +1,80 @@
+name: A16 Kernel Build (NOT FLASHABLE)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: RMX2170 ARM64 — build and audit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 330
+    env:
+      KERNEL_REPO: https://github.com/realme-atoll/android_kernel_realme_sm7125.git
+      KERNEL_SHA: 10380039ddcd6ead841e1fc4ca744a2dd6e92fb8
+      KSU_REPO: https://github.com/dawood333/KernelSU-Next-susfs.git
+      KSU_SHA: f28feddf9e02ce10548a1e0ed6d15a3a3f5733dc
+      SUSFS_REPO: https://github.com/kutemeikito/susfs4ksu.git
+      SUSFS_SHA: 77905b5a071e6f3669e3b1814cea30147c0801da
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential git python3 bc bison flex libssl-dev libelf-dev libncurses-dev             clang-18 lld-18 llvm-18 llvm-18-tools gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu             ccache rsync pahole device-tree-compiler gzip xz-utils zip unzip
+          clang-18 --version
+          ld.lld-18 --version
+
+      - name: Fetch exact kernel, KernelSU Next and SUSFS revisions
+        run: |
+          set -euo pipefail
+          git clone --filter=blob:none --no-checkout "$KERNEL_REPO" kernel
+          git -C kernel checkout "$KERNEL_SHA"
+          test "$(git -C kernel rev-parse HEAD)" = "$KERNEL_SHA"
+          git clone --filter=blob:none --no-checkout "$KSU_REPO" KernelSU-Next
+          git -C KernelSU-Next checkout "$KSU_SHA"
+          test "$(git -C KernelSU-Next rev-parse HEAD)" = "$KSU_SHA"
+          git clone --filter=blob:none --no-checkout "$SUSFS_REPO" susfs4ksu
+          git -C susfs4ksu checkout "$SUSFS_SHA"
+          test "$(git -C susfs4ksu rev-parse HEAD)" = "$SUSFS_SHA"
+
+      - name: Check unmodified device sources and version
+        run: |
+          set -euo pipefail
+          test "$(sed -n '2s/[^0-9]//gp' kernel/Makefile)" = "4"
+          grep -qx 'PATCHLEVEL = 14' kernel/Makefile
+          grep -qx 'SUBLEVEL = 336' kernel/Makefile
+          test -f kernel/arch/arm64/configs/atoll_defconfig
+          grep -q 'CONFIG_OPPO_FINGERPRINT_GOODIX_OPTICAL=y' kernel/arch/arm64/configs/atoll_defconfig
+          git -C kernel status --porcelain > initial-kernel-status.txt
+          test ! -s initial-kernel-status.txt
+
+      - name: Integrate KernelSU Next + SUSFS (fail on conflicts)
+        run: bash scripts/integrate.sh
+
+      - name: Build ARM64 Image.gz and DTBs
+        run: bash scripts/build.sh
+
+      - name: Validate compiled kernel and features
+        run: bash scripts/verify.sh
+
+      - name: Upload non-flashable diagnostic artifacts only
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: A16-RMX2170-NONFLASHABLE-BUILD-CHECK
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            audit/build-report.txt
+            audit/config.txt
+            audit/patch-stat.txt
+            kernel/out/arch/arm64/boot/Image.gz
+            kernel/out/arch/arm64/boot/dts/**/*.dtb
+            kernel/out/.config
