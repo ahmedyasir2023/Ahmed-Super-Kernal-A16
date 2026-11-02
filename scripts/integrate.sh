@@ -9,6 +9,18 @@ test -d "$K/arch/arm64" && test -f "$KS/kernel/Kconfig"
 test -f "$SU/kernel_patches/50_add_susfs_in_kernel-4.14.patch"
 test -f "$SU/kernel_patches/fs/susfs.c"
 test -f "$KS/kernel/ksu.c" || { echo "Review legacy KernelSU Next fork layout"; exit 1; }
+# KernelSU-Next legacy SUSFS Makefile injects get_cred_rcu into cred.h during Kbuild.
+# This Atoll kernel uses atomic_long_t for cred.usage, not atomic_t.
+# Fix only the pinned external KernelSU fork in the ephemeral build checkout.
+python3 - <<'PY'
+from pathlib import Path
+p = Path("KernelSU-Next/kernel/Makefile")
+s = p.read_text()
+old = "atomic_inc_not_zero(&nonconst_cred->usage)"
+new = "atomic_long_inc_not_zero(&nonconst_cred->usage)"
+assert s.count(old) == 1, "KernelSU Makefile changed; review needed"
+p.write_text(s.replace(old, new))
+PY
 # Link exact pinned KernelSU Next kernel directory into the stock drivers tree.
 ln -s ../../KernelSU-Next/kernel "$K/drivers/kernelsu"
 printf '\nobj-$(CONFIG_KSU) += kernelsu/\n' >> "$K/drivers/Makefile"
