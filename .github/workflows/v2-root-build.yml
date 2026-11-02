@@ -25,6 +25,15 @@ jobs:
       - name: Checkout project
         uses: actions/checkout@v4
 
+      - name: Validate project scripts before expensive source downloads
+        run: |
+          set -euo pipefail
+          for script in scripts/v2/integrate_root.sh scripts/v2/build_root.sh; do
+            bash -n "$script"
+          done
+          python3 -m py_compile scripts/v2/manual_hooks.py scripts/prepare_ksu_legacy.py scripts/verify_boot_dtb.py
+          echo 'Bash and Python source syntax checks passed'
+
       - name: Install build dependencies
         run: |
           set -euo pipefail
