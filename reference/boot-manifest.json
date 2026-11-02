@@ -1,0 +1,35 @@
+{
+  "device": "Realme 7 Pro RMX2170",
+  "rom": "EvolutionX-16.0-20261102-RMX2170",
+  "source": "User-uploaded partial ROM ZIP; boot images are not stored in the repository",
+  "kernel_release": "4.14.336",
+  "boot": {
+    "filename": "boot.img",
+    "bytes": 67108864,
+    "sha256": "4101a2db9a8fdc388f44a3ce4a23c14b2a856c5a902126513624b9c6c4db2653",
+    "magic": "ANDROID!",
+    "header_version": 2,
+    "page_size": 4096,
+    "kernel_size": 19590365,
+    "ramdisk_size": 1581241,
+    "dtb_size": 2775467,
+    "kernel_compression": "gzip",
+    "unpacked_kernel_size": 50341960,
+    "compiler": "Android clang 21.0.0 r563880c"
+  },
+  "dtbo": {
+    "filename": "dtbo.img",
+    "bytes": 25165824,
+    "sha256": "97e4041f2bd6541228a1c977fa5ba40d4c4b4dc3a482e588c3892480d16e097b"
+  },
+  "vbmeta": {
+    "filename": "vbmeta.img",
+    "bytes": 8192,
+    "sha256": "4d5141732c6b3df91a55c60b4088be6e2d025a243fa691caf2ac8528c8b24451"
+  },
+  "vbmeta_system": {
+    "filename": "vbmeta_system.img",
+    "bytes": 4096,
+    "sha256": "ac5372cf528c85d698baa4bf6c98cde09368ec4306909fc123a9227dc9deb7ee"
+  }
+}
