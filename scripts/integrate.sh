@@ -43,6 +43,8 @@ cd "$K"
 python3 "$ROOT/scripts/port_susfs_patch.py"
 git apply --check "$ROOT/audit/susfs-4.14-atoll.patch"
 git apply "$ROOT/audit/susfs-4.14-atoll.patch"
+cd "$ROOT"
+python3 "$ROOT/scripts/prepare_ksu_legacy.py"
 grep -q 'config KSU_SUSFS' "$KS/kernel/Kconfig"
 grep -q 'susfs.o' fs/Makefile
 grep -q 'source "drivers/kernelsu/Kconfig"' drivers/Kconfig
