@@ -46,7 +46,8 @@ git apply "$ROOT/audit/susfs-4.14-atoll.patch"
 cd "$ROOT"
 python3 "$ROOT/scripts/prepare_ksu_legacy.py"
 grep -q 'config KSU_SUSFS' "$KS/kernel/Kconfig"
-grep -q 'susfs.o' fs/Makefile
-grep -q 'source "drivers/kernelsu/Kconfig"' drivers/Kconfig
-git diff --stat > "$ROOT/audit/patch-stat.txt"
+grep -q 'susfs.o' "$K/fs/Makefile"
+grep -q 'source "drivers/kernelsu/Kconfig"' "$K/drivers/Kconfig"
+grep -q 'int path_umount(struct path \*path, int flags)' "$K/fs/namespace.c"
+git -C "$K" diff --stat > "$ROOT/audit/patch-stat.txt"
 echo "Integration applied; no vendor drivers edited."
