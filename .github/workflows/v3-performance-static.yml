@@ -1,0 +1,21 @@
+name: V3 Performance Collector Static Checks
+
+on:
+  push:
+    branches: [v3-performance-measurement]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check benchmark script syntax
+        run: |
+          set -euo pipefail
+          python3 -m py_compile tools/benchmark_rmx2170.py
+          python3 tools/benchmark_rmx2170.py --help
+          grep -Fq 'No kernel settings, CPU governor, SELinux, ZRAM or files on the phone are modified' tools/benchmark_rmx2170.py
