@@ -1,0 +1,143 @@
+name: V3 SUSFS 4.14 Port Lab (NEVER FLASH)
+
+on:
+  push:
+    branches: [v3-susfs-port-lab]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v3-susfs-lab-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compile-experiment:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    env:
+      KERNEL_SHA: 10380039ddcd6ead841e1fc4ca744a2dd6e92fb8
+      FORK_SHA: d999a2aff11575c6e2f520129ecffb7c6058fb02
+      SUSFS_SHA: 77905b5a071e6f3669e3b1814cea30147c0801da
+      CLANG_URL: https://github.com/SA9990/Toolchain/releases/download/clang-r563880c/clang-r563880c.tar.gz
+      CLANG_SHA256: 57b456636aa9c3f5e159bc1dd6eddd7c6de654281cad84376e408a5d35f91bab
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Validate scripts syntax before source checkout
+        run: |
+          set -euo pipefail
+          bash -n scripts/v3/stage_susfs_4_14.sh
+          bash -n scripts/v3/build_susfs_4_14.sh
+          python3 -m py_compile scripts/v2/manual_hooks.py scripts/prepare_ksu_legacy.py scripts/port_susfs_patch.py scripts/verify_boot_dtb.py
+          mkdir -p audit
+          echo "Preflight syntax validated" > audit/v3-ci-status.txt
+
+      - name: Fetch exactly pinned kernel, SUSFS and bridge reference
+        run: |
+          set -euo pipefail
+          git clone --filter=blob:none --no-checkout https://github.com/realme-atoll/android_kernel_realme_sm7125.git kernel
+          git -C kernel checkout "$KERNEL_SHA"
+          git clone --filter=blob:none --no-checkout https://github.com/sidex15/KernelSU-Next.git KernelSU-Next
+          git -C KernelSU-Next checkout "$FORK_SHA"
+          git clone --filter=blob:none --no-checkout https://github.com/kutemeikito/susfs4ksu.git susfs4ksu
+          git -C susfs4ksu checkout "$SUSFS_SHA"
+          test "$(git -C kernel rev-parse HEAD)" = "$KERNEL_SHA"
+          test "$(git -C KernelSU-Next rev-parse HEAD)" = "$FORK_SHA"
+          test "$(git -C susfs4ksu rev-parse HEAD)" = "$SUSFS_SHA"
+          grep -qx 'SUBLEVEL = 336' kernel/Makefile
+          grep -Fq 'KERNEL_SU_UAPI_VERSION = 4' KernelSU-Next/uapi/supercall.h
+          echo "Pinned fork is UAPI 4: compile evidence only, not compatible with the user's working UAPI 6 manager." >> audit/v3-ci-status.txt
+
+      - name: Stage 4.14 SUSFS and fail closed on patch conflicts
+        run: bash scripts/v3/stage_susfs_4_14.sh
+
+      - name: Install ARM64 build dependencies
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y build-essential git python3 bc bison flex libssl-dev libelf-dev libncurses-dev curl ca-certificates tar gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu ccache rsync pahole device-tree-compiler gzip xz-utils
+
+      - name: Restore pinned Android Clang 21
+        uses: actions/cache@v4
+        id: clang-cache
+        with:
+          path: toolchain
+          key: android-clang-r563880c-linux-x86_64-v1
+
+      - name: Fetch pinned compiler only when uncached
+        if: steps.clang-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 5 "$CLANG_URL" -o /tmp/toolchain.tar.gz
+          echo "$CLANG_SHA256  /tmp/toolchain.tar.gz" | sha256sum --check -
+          mkdir -p toolchain
+          tar -xzf /tmp/toolchain.tar.gz -C toolchain
+          rm -f /tmp/toolchain.tar.gz
+
+      - name: Export Clang 21
+        run: |
+          set -euo pipefail
+          CLANG_PATH="$(find -L toolchain -name clang -type f -print -quit)"
+          test -n "$CLANG_PATH"
+          CLANG_BIN="$(cd "$(dirname "$CLANG_PATH")" && pwd)"
+          for tool in clang clang++ ld.lld llvm-ar llvm-nm llvm-objcopy llvm-objdump llvm-strip; do test -x "$CLANG_BIN/$tool"; done
+          "$CLANG_BIN/clang" --version | tee audit/v3-compiler.txt
+          grep -q '21.0.0' audit/v3-compiler.txt
+          echo "CLANG_BIN=$CLANG_BIN" >> "$GITHUB_ENV"
+
+      - name: Compile experimental KernelSU and SUSFS 1.5.5
+        run: bash scripts/v3/build_susfs_4_14.sh
+
+      - name: Verify SUSFS objects and original device trees
+        run: |
+          set -euo pipefail
+          test -s kernel/out/arch/arm64/boot/Image.gz
+          gzip -t kernel/out/arch/arm64/boot/Image.gz
+          test -s kernel/out/vmlinux
+          test -s kernel/out/fs/susfs.o
+          test -s kernel/out/drivers/kernelsu/kernelsu.o
+          grep -qx 'CONFIG_KSU=y' kernel/out/.config
+          grep -qx 'CONFIG_KSU_MANUAL_HOOK=y' kernel/out/.config
+          grep -qx 'CONFIG_KSU_SUSFS=y' kernel/out/.config
+          python3 scripts/verify_boot_dtb.py
+          if git -C kernel diff --name-only | grep -E '^(drivers/(input|gpu|media|power|soc|staging|fingerprint|misc)|sound|arch/arm64/boot/dts)/'; then
+            echo 'DRIVER SOURCE MODIFICATION DETECTED: FAIL'
+            exit 1
+          fi
+          cp kernel/out/.config audit/v3-config.txt
+          {
+            echo 'V3 SUSFS SOURCE LAB BUILD SUCCESS — NONFLASHABLE'
+            echo 'Legacy-SUSFS fork UAPI=4; user running UAPI=6; no device release permitted'
+            echo 'SUSFS v1.5.5; only source and link success, no runtime verification'
+            echo "Kernel source: $(git -C kernel rev-parse HEAD)"
+            echo "SUSFS fork: $(git -C KernelSU-Next rev-parse HEAD)"
+            echo "SUSFS patch: $(git -C susfs4ksu rev-parse HEAD)"
+            echo "Image.gz SHA256: $(sha256sum kernel/out/arch/arm64/boot/Image.gz)"
+            echo 'NO BOOT IMG, NO FLASHABLE ZIP; baseline API6 root remains intact'
+          } | tee audit/v3-build-report.txt
+
+      - name: Upload source diagnostics even if build fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: A16-V3-SUSFS-PORT-LAB-REPORTS-ONLY
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            audit/v3-*.txt
+            audit/susfs-4.14-atoll.patch
+            audit/boot-dtb-compatibility.txt
+
+      - name: Upload non-flashable kernel binaries only after full success
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: A16-V3-SUSFS-COMPILE-PROOF-NONFLASHABLE
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            kernel/out/arch/arm64/boot/Image.gz
+            kernel/out/arch/arm64/boot/dts/**/*.dtb
