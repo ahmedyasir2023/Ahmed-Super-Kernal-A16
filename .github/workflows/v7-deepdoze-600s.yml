@@ -32,8 +32,9 @@ jobs:
           for script in scripts/v2/integrate_root.sh scripts/v3/stage_api6_susfs_core.sh scripts/v3/build_api6_susfs_core.sh; do
             bash -n "$script"
           done
-          python3 -m py_compile scripts/v2/manual_hooks.py scripts/prepare_ksu_legacy.py scripts/port_susfs_patch.py scripts/verify_boot_dtb.py scripts/v3/patch_api6_susfs_logging.py scripts/v3/patch_api6_susfs_uname.py scripts/v3/patch_api6_susfs_appstate.py scripts/v3/patch_api6_susfs_path.py scripts/v3/validate_path_bridge.py scripts/v4/patch_dt2w_default.py scripts/v5/patch_ay_input_boost.py scripts/v5/validate_ay_input_boost.py scripts/v6/patch_screen_wake_boost.py scripts/v6/validate_screen_wake_boost.py scripts/v7/patch_deepdoze_600s.py scripts/v7/validate_deepdoze_600s.py
+          python3 -m py_compile scripts/v2/manual_hooks.py scripts/prepare_ksu_legacy.py scripts/port_susfs_patch.py scripts/verify_boot_dtb.py scripts/v3/patch_api6_susfs_logging.py scripts/v3/patch_api6_susfs_uname.py scripts/v3/patch_api6_susfs_appstate.py scripts/v3/patch_api6_susfs_path.py scripts/v3/validate_path_bridge.py scripts/v4/patch_dt2w_default.py scripts/v5/patch_ay_input_boost.py scripts/v5/validate_ay_input_boost.py scripts/v6/patch_screen_wake_boost.py scripts/v6/validate_screen_wake_boost.py scripts/v7/patch_deepdoze_600s.py scripts/v7/validate_deepdoze_600s.py scripts/v7/patch_v7_1_wake_race.py scripts/v7/validate_v7_1_wake_race.py scripts/v7/preflash_audit.py
           echo 'Bash and Python source syntax checks passed'
+          python3 scripts/v7/preflash_audit.py --self-test
 
       - name: Install build dependencies
         run: |
@@ -126,6 +127,13 @@ jobs:
           python3 scripts/v7/validate_deepdoze_600s.py
           git -C kernel -c core.whitespace=-blank-at-eol diff --check
 
+      - name: V7.1 wake/reblank race fix and ROM compatibility audit
+        run: |
+          set -euo pipefail
+          python3 scripts/v7/patch_v7_1_wake_race.py
+          python3 scripts/v7/validate_v7_1_wake_race.py
+          git -C kernel -c core.whitespace=-blank-at-eol diff --check
+
       - name: Verify fail-closed API6 path-only source and permission contract
         run: python3 scripts/v3/validate_path_bridge.py
       - name: Compile ARM64 with official Root and isolated SUSFS path VFS hooks
@@ -163,6 +171,7 @@ jobs:
           grep -qx 'CONFIG_DRM_MSM=y' kernel/out/.config
           python3 scripts/v6/validate_screen_wake_boost.py
           python3 scripts/v7/validate_deepdoze_600s.py
+          python3 scripts/v7/validate_v7_1_wake_race.py
           grep -Fq '#define KERNEL_SU_UAPI_VERSION 6' KernelSU-Next/uapi/supercall.h
           python3 scripts/verify_boot_dtb.py
           TOUCH=drivers/input/touchscreen/oppo_touchscreen/touchpanel_common_driver.c
@@ -176,7 +185,7 @@ jobs:
           fi
           cp kernel/out/.config audit/config-api6-susfs-core.txt
           {
-            echo 'V7 DEEPDOZE 600S + INSTANTWAKE — EXPERIMENTAL, NOT FLASHABLE'
+            echo 'V7.1 DEEPDOZE 600S + WAKE-RACE GUARD — EXPERIMENTAL, NOT FLASHABLE'
             echo "Android clang: $(head -n 1 audit/compiler.txt)"
             echo "Kernel SHA: $(git -C kernel rev-parse HEAD)"
             echo "KernelSU SHA: $(git -C KernelSU-Next rev-parse HEAD)"
@@ -188,6 +197,7 @@ jobs:
             echo 'Panel blank: release input/WALT; one-shot deferrable 600s timer then cap CPU policy max to allowed min'
             echo 'No max frequency pins, thermal/SELinux/DTB bypass or active polling'
             echo 'On unblank: cancel timer and remove CPU cap before InstantWake; runtime DT2W/app speed NOT yet verified'
+            echo 'V7.1: last-blank deadline check avoids an early cap after rapid off/on/off transitions'
             echo 'Official KernelSU Next UAPI 6 retained; Root runtime not tested in this lab'
             echo 'No new boot.img or ZIP created'
             echo 'Device boot and root tests not done'
@@ -207,6 +217,6 @@ jobs:
             audit/susfs-4.14-atoll.patch
             audit/boot-dtb-compatibility.txt
             audit/config-api6-susfs-core.txt
-            audit/v6-screenoff-instantwake-build-report.txt
+            audit/v7-deepdoze-600s-build-report.txt
             kernel/out/arch/arm64/boot/Image.gz
             kernel/out/arch/arm64/boot/dts/**/*.dtb
