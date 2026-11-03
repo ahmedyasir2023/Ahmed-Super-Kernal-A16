@@ -39,6 +39,7 @@ git -C "$K" apply "$ROOT/audit/susfs-4.14-atoll.patch"
 bash "$ROOT/scripts/v2/integrate_root.sh"
 # Read-only metadata bridge only (SUSFS SHOW_VERSION + zero-feature report).
 python3 "$ROOT/scripts/v3/patch_api6_susfs_logging.py"
+python3 "$ROOT/scripts/v3/patch_api6_susfs_uname.py"
 
 # Enable only the filesystem-core object and its initialization in the build
 # probe. No SUSFS command bridge or functionality is claimed or published.
