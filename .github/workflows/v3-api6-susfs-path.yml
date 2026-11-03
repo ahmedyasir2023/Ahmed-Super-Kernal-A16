@@ -106,12 +106,12 @@ jobs:
           # Verify the exactly scoped, read-only SUSFS metadata bridge is present.
           grep -Fq 'arg2 == CMD_SUSFS_SHOW_VERSION' kernel/kernel/sys.c
           grep -Fq 'arg2 == CMD_SUSFS_SHOW_ENABLED_FEATURES' kernel/kernel/sys.c
-          grep -Fq 'u64 enabled_features = (1ULL << 8) | (1ULL << 9)' kernel/kernel/sys.c
+          grep -Fq 'u64 enabled_features = (1ULL << 0) | (1ULL << 8) | (1ULL << 9)' kernel/kernel/sys.c
           grep -Fq 'susfs_set_log(arg3 != 0)' kernel/kernel/sys.c
           grep -Fq 'susfs_set_uname(' kernel/kernel/sys.c
           grep -Fq 'CMD_SUSFS_SHOW_VARIANT' kernel/kernel/sys.c
           if git -C kernel diff --name-only | grep -Fq 'kernel/sys.c'; then
-            echo 'Root-only ABI metadata handler present; actual hiding features deliberately disabled.'
+            echo 'Root-gated SUSFS path+uname+logging bridge staged; mount/kstat hiding deliberately disabled.'
           else
             echo 'Missing expected prctl bridge source'; exit 1
           fi
