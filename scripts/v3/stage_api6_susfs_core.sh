@@ -84,6 +84,7 @@ PY
 # created above; this preserves exact source and config dependency order.
 python3 "$ROOT/scripts/v3/patch_api6_susfs_logging.py"
 python3 "$ROOT/scripts/v3/patch_api6_susfs_uname.py"
+python3 "$ROOT/scripts/v3/patch_api6_susfs_appstate.py"
 
 # Do not silently modify vendor hardware drivers, DTBs or modem sources.
 if git -C "$K" diff --name-only | grep -E '^(drivers/(input|gpu|media|power|soc|staging|fingerprint|misc)|sound|arch/arm64/boot/dts)/'; then
