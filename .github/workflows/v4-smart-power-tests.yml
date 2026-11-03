@@ -1,0 +1,23 @@
+name: V4 SmartSleep Battery Baseline Tests (READ ONLY)
+
+on:
+  push:
+    branches: [v4-smart-power-baseline]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-baseline-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Syntax and offline sample tests; no phone or shell writes
+        run: |
+          set -euo pipefail
+          python3 -m py_compile tools/measure_idle_battery_rmx2170.py tests/test_idle_battery_rmx2170.py
+          python3 -m unittest discover -s tests -p 'test_idle_battery_rmx2170.py' -v
+          python3 tools/measure_idle_battery_rmx2170.py --help
+          grep -Fq 'no device-side timer, polling loop' tools/measure_idle_battery_rmx2170.py || true
