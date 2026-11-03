@@ -1,0 +1,149 @@
+name: V4 Always-On DT2W on Working API6 Root (NO ZIP)
+
+on:
+  push:
+    branches: [v4-always-on-dt2w]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v4-dt2w-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dt2w-root:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 330
+    env:
+      KERNEL_SHA: 10380039ddcd6ead841e1fc4ca744a2dd6e92fb8
+      KSU_SHA: b933b1f728116a456fbebf27b6a8772a640cdf23
+      CLANG_URL: https://github.com/SA9990/Toolchain/releases/download/clang-r563880c/clang-r563880c.tar.gz
+      CLANG_SHA256: 57b456636aa9c3f5e159bc1dd6eddd7c6de654281cad84376e408a5d35f91bab
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Validate project scripts before expensive source downloads
+        run: |
+          set -euo pipefail
+          for script in scripts/v2/integrate_root.sh scripts/v2/build_root.sh; do
+            bash -n "$script"
+          done
+          python3 -m py_compile scripts/v2/manual_hooks.py scripts/prepare_ksu_legacy.py scripts/verify_boot_dtb.py scripts/v4/patch_dt2w_default.py
+          echo 'Bash and Python source syntax checks passed'
+
+      - name: Install build dependencies
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y build-essential git python3 bc bison flex libssl-dev libelf-dev libncurses-dev curl ca-certificates tar gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu ccache rsync pahole device-tree-compiler gzip xz-utils
+          mkdir -p audit
+
+      - name: Reuse pinned Android Clang 21
+        id: clang-cache
+        uses: actions/cache@v4
+        with:
+          path: toolchain
+          key: android-clang-r563880c-linux-x86_64-v1
+
+      - name: Fetch and validate Android Clang 21 if uncached
+        if: steps.clang-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 5 "$CLANG_URL" -o /tmp/toolchain.tar.gz
+          echo "$CLANG_SHA256  /tmp/toolchain.tar.gz" | sha256sum --check -
+          mkdir -p toolchain
+          tar -xzf /tmp/toolchain.tar.gz -C toolchain
+          rm -f /tmp/toolchain.tar.gz
+
+      - name: Verify Clang toolchain
+        run: |
+          set -euo pipefail
+          CLANG_PATH="$(find -L toolchain -name clang -type f -print -quit)"
+          test -n "$CLANG_PATH"
+          CLANG_BIN="$(cd "$(dirname "$CLANG_PATH")" && pwd)"
+          for name in clang clang++ ld.lld llvm-ar llvm-nm llvm-objcopy llvm-objdump llvm-strip; do test -x "$CLANG_BIN/$name"; done
+          "$CLANG_BIN/clang" --version | tee audit/compiler.txt
+          grep -q '21.0.0' audit/compiler.txt
+          echo "CLANG_BIN=$CLANG_BIN" >> "$GITHUB_ENV"
+
+      - name: Checkout original ROM kernel and official KernelSU Next Legacy
+        run: |
+          set -euo pipefail
+          git clone --filter=blob:none --no-checkout https://github.com/realme-atoll/android_kernel_realme_sm7125.git kernel
+          git -C kernel checkout "$KERNEL_SHA"
+          test "$(git -C kernel rev-parse HEAD)" = "$KERNEL_SHA"
+          git clone --filter=blob:none --no-checkout https://github.com/KernelSU-Next/KernelSU-Next.git KernelSU-Next
+          git -C KernelSU-Next checkout "$KSU_SHA"
+          test "$(git -C KernelSU-Next rev-parse HEAD)" = "$KSU_SHA"
+          test -f kernel/arch/arm64/configs/atoll_defconfig
+          test -f KernelSU-Next/kernel/Kbuild
+          grep -qx 'SUBLEVEL = 336' kernel/Makefile
+          test -z "$(git -C kernel status --porcelain)"
+
+      - name: Install source-validated manual hooks (modern root only)
+        run: bash scripts/v2/integrate_root.sh
+
+      - name: Enable DT2W at vendor touch-driver initialization
+        run: |
+          set -euo pipefail
+          python3 scripts/v4/patch_dt2w_default.py
+          TOUCH=drivers/input/touchscreen/oppo_touchscreen/touchpanel_common_driver.c
+          test "$(git -C kernel diff --numstat -- "$TOUCH")" = "$(printf '1\t1\t%s' "$TOUCH")"
+          grep -Fq 'uint8_t DouTap_enable = 1;' "kernel/$TOUCH"
+          grep -Fq 'ts->gesture_enable = 1;' "kernel/$TOUCH"
+          if git -C kernel diff --name-only | grep -E '^(drivers/(input|gpu|media|power|soc|staging|fingerprint|misc)|sound|arch/arm64/boot/dts)/' | grep -Fvx "$TOUCH"; then
+            echo 'Unexpected vendor hardware driver/DTB changed — blocked'
+            exit 1
+          fi
+          git -C kernel diff --check
+
+      - name: Compile ARM64 with official modern legacy Root + DT2W
+        run: bash scripts/v2/build_root.sh
+
+      - name: Verify hardware DTB and actual root objects
+        run: |
+          set -euo pipefail
+          test -s kernel/out/arch/arm64/boot/Image.gz
+          gzip -t kernel/out/arch/arm64/boot/Image.gz
+          test -s kernel/out/vmlinux
+          test -s kernel/out/drivers/kernelsu/kernelsu.o
+          grep -qx 'CONFIG_KSU=y' kernel/out/.config
+          grep -qx 'CONFIG_KSU_MANUAL_HOOK=y' kernel/out/.config
+          python3 scripts/verify_boot_dtb.py
+          TOUCH=drivers/input/touchscreen/oppo_touchscreen/touchpanel_common_driver.c
+          test "$(git -C kernel diff --numstat -- "$TOUCH")" = "$(printf '1\t1\t%s' "$TOUCH")"
+          if git -C kernel diff --name-only | grep -E '^(drivers/(input|gpu|media|power|soc|staging|fingerprint|misc)|sound|arch/arm64/boot/dts)/' | grep -Fvx "$TOUCH"; then
+            echo 'Only one DT2W default line is authorized in vendor driver source'
+            exit 1
+          fi
+          cp kernel/out/.config audit/config-root-only.txt
+          {
+            echo 'V4 DEFAULT-ON DT2W + WORKING API6 ROOT — CI EXPERIMENT (NOT FLASHABLE)'
+            echo "Android clang: $(head -n 1 audit/compiler.txt)"
+            echo "Kernel SHA: $(git -C kernel rev-parse HEAD)"
+            echo "KernelSU SHA: $(git -C KernelSU-Next rev-parse HEAD)"
+            echo "KernelSU mode: manual hooks for Linux 4.14"
+            echo "Image.gz SHA-256: $(sha256sum kernel/out/arch/arm64/boot/Image.gz)"
+            echo 'SUSFS deliberately not integrated into this isolated DT2W experiment'\n            echo 'Vendor touch default DouTap_enable=1, gesture_enable=0, ts->gesture_enable=1'\n            echo 'DT2W feature runtime not yet tested on RMX2170 after reboot'
+            echo 'No new boot.img or ZIP created'
+            echo 'Device boot and root tests not done'
+          } | tee audit/v4-dt2w-build-report.txt
+
+      - name: Publish diagnostic outputs only
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: A16-V4-DT2W-ROOT-API6-COMPILE-NONFLASHABLE
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            audit/compiler.txt
+            audit/patch-stat.txt
+            audit/boot-dtb-compatibility.txt
+            audit/config-root-only.txt
+            audit/v2-root-baseline.txt
+            kernel/out/arch/arm64/boot/Image.gz
+            kernel/out/arch/arm64/boot/dts/**/*.dtb
