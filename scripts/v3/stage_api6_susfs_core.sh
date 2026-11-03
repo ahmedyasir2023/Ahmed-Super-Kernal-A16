@@ -38,7 +38,7 @@ git -C "$K" apply "$ROOT/audit/susfs-4.14-atoll.patch"
 # Apply the *known-working* API-6 Manual Hooks to the patched 4.14 kernel.
 bash "$ROOT/scripts/v2/integrate_root.sh"
 # Read-only metadata bridge only (SUSFS SHOW_VERSION + zero-feature report).
-python3 "$ROOT/scripts/v3/patch_api6_susfs_readonly_prctl.py"
+python3 "$ROOT/scripts/v3/patch_api6_susfs_logging.py"
 
 # Enable only the filesystem-core object and its initialization in the build
 # probe. No SUSFS command bridge or functionality is claimed or published.
