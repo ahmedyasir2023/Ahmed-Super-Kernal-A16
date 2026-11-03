@@ -41,7 +41,16 @@ for bad in ("policy->max =", "thermal_disable", "selinux_enforcing = 0",
             "CPU_FREQ_GOV_PERFORMANCE=y", "msleep(600000)",
             "schedule_delayed_work(&ay_deepdoze_timer"):
     assert bad not in driver, f"Forbidden driver code: {bad}"
-assert driver.count("msecs_to_jiffies(600000)") == 1
+# V7.1 adds a second legitimate 600s expression for the latest screen-blank
+# deadline. Accept exactly one in V7-only, exactly two after the race patch.
+v71 = "static unsigned long ay_deepdoze_last_blank;" in driver
+expected = 2 if v71 else 1
+assert driver.count("msecs_to_jiffies(600000)") == expected, (
+    f"Unexpected DeepDoze 600s timer expressions: expected {expected}"
+)
+if v71:
+    assert "WRITE_ONCE(ay_deepdoze_last_blank, jiffies);" in driver
+    assert "if (time_before(jiffies, due))" in driver
 assert "uint8_t DouTap_enable = 1;" in touch
 assert "ts->gesture_enable = 1;" in touch
 if config:

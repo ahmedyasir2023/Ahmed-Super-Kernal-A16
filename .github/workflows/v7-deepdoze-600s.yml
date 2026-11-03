@@ -132,6 +132,9 @@ jobs:
           set -euo pipefail
           python3 scripts/v7/patch_v7_1_wake_race.py
           python3 scripts/v7/validate_v7_1_wake_race.py
+          # Re-run the base V7 contract AFTER V7.1 changes, not just before.
+          # Fail here instead of wasting minutes compiling a broken contract.
+          python3 scripts/v7/validate_deepdoze_600s.py
           git -C kernel -c core.whitespace=-blank-at-eol diff --check
 
       - name: Verify fail-closed API6 path-only source and permission contract
