@@ -38,7 +38,6 @@ git -C "$K" apply "$ROOT/audit/susfs-4.14-atoll.patch"
 # Apply the *known-working* API-6 Manual Hooks to the patched 4.14 kernel.
 bash "$ROOT/scripts/v2/integrate_root.sh"
 # Read-only metadata bridge only (SUSFS SHOW_VERSION + zero-feature report).
-python3 "$ROOT/scripts/v3/patch_api6_susfs_logging.py"
 
 # Enable only the filesystem-core object and its initialization in the build
 # probe. No SUSFS command bridge or functionality is claimed or published.
@@ -80,6 +79,10 @@ assert '#define KERNEL_SU_UAPI_VERSION 6' in Path("KernelSU-Next/uapi/supercall.
 assert 'config KSU_SUSFS\n' in cfg.read_text()
 assert 'susfs_init();' in core.read_text()
 PY
+
+# Apply the KSU SUSFS userspace bridge only after its Kconfig base was
+# created above; this preserves exact source and config dependency order.
+python3 "$ROOT/scripts/v3/patch_api6_susfs_logging.py"
 
 # Do not silently modify vendor hardware drivers, DTBs or modem sources.
 if git -C "$K" diff --name-only | grep -E '^(drivers/(input|gpu|media|power|soc|staging|fingerprint|misc)|sound|arch/arm64/boot/dts)/'; then
