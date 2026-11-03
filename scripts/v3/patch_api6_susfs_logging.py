@@ -30,8 +30,8 @@ for name, number in {
     "CMD_SUSFS_ENABLE_LOG": "0x555a0",
 }.items():
     assert f"#define {name} {number}" in defs, name
-assert "config KSU_SUSFS\\n" in kconfig
-assert "config KSU_SUSFS_ENABLE_LOG\\n" not in kconfig
+assert "config KSU_SUSFS\n" in kconfig
+assert "config KSU_SUSFS_ENABLE_LOG\n" not in kconfig
 cfg.write_text(kconfig + """
 config KSU_SUSFS_ENABLE_LOG
     bool "SUSFS logging ABI experiment (not root hiding)"
@@ -42,7 +42,7 @@ config KSU_SUSFS_ENABLE_LOG
       read-only metadata calls. No SUSFS hiding features are activated.
 """)
 
-includes = "#include <linux/prctl.h>\\n"
+includes = "#include <linux/prctl.h>\n"
 assert source.count(includes) == 1
 source = source.replace(includes, includes + """#ifdef CONFIG_KSU_SUSFS
 #include <linux/susfs.h>
@@ -51,11 +51,11 @@ source = source.replace(includes, includes + """#ifdef CONFIG_KSU_SUSFS
 
 """, 1)
 
-anchor = """\\tlong error;
+anchor = """\tlong error;
 
-\\terror = security_task_prctl(option, arg2, arg3, arg4, arg5);"""
+\terror = security_task_prctl(option, arg2, arg3, arg4, arg5);"""
 assert source.count(anchor) == 1, "Unexpected Realme 4.14 prctl source"
-bridge = """\\tlong error;
+bridge = """\tlong error;
 
 #ifdef CONFIG_KSU_SUSFS
     /*
@@ -116,7 +116,7 @@ bridge = """\\tlong error;
     }
 #endif
 
-\\terror = security_task_prctl(option, arg2, arg3, arg4, arg5);"""
+\terror = security_task_prctl(option, arg2, arg3, arg4, arg5);"""
 
 source = source.replace(anchor, bridge, 1)
 sys_file.write_text(source)
