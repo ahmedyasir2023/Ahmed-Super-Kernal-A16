@@ -92,8 +92,9 @@ replace_exact(anchor, dynamic_function + anchor)
 replace_exact(
     "\t\ti_sync_info->input_boost_min = i_sync_info->input_boost_freq;",
     "\t\t/* Explicit per-CPU frequencies override the adaptive default. */\n"
-    "\t\ti_sync_info->input_boost_min = i_sync_info->input_boost_freq ?: \n"
-    "\t\t\tay_dynamic_input_boost_khz(i);"
+    "\t\ti_sync_info->input_boost_min = i_sync_info->input_boost_freq;\n"
+    "\t\tif (!i_sync_info->input_boost_min)\n"
+    "\t\t\ti_sync_info->input_boost_min = ay_dynamic_input_boost_khz(i);"
 )
 replace_exact(
     "\t\t\t\t\tmsecs_to_jiffies(input_boost_ms));",
