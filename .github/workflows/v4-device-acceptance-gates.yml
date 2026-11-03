@@ -1,0 +1,30 @@
+name: V4 Device Acceptance Tools — Offline Validation Only
+
+on:
+  push:
+    branches: [v4-device-acceptance-and-boot-gates]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+      - name: Validate Python tools without device connection
+        run: |
+          set -euo pipefail
+          python3 -m py_compile tools/verify_dt2w_after_reboot.py
+          python3 -m py_compile tools/measure_idle_battery_rmx2170.py
+          python3 -m py_compile tools/benchmark_rmx2170.py
+          python3 -m py_compile scripts/v4/patch_dt2w_default.py
+          python3 tools/verify_dt2w_after_reboot.py --help
+          python3 tools/measure_idle_battery_rmx2170.py --help
+          python3 tools/benchmark_rmx2170.py --help
+          python3 -m unittest discover -s tests -p 'test_idle_battery_rmx2170.py' -v
+          test -s docs/V4-verified-release-gates.md
+          grep -Fq 'No flashable V4 ZIP' docs/V4-verified-release-gates.md
