@@ -58,6 +58,9 @@ printf '\nsource "drivers/kernelsu/Kconfig"\n' >> "$K/drivers/Kconfig"
 # The already tested V2 manual hooks, after SUSFS patching to catch conflicts.
 python3 "$ROOT/scripts/v2/manual_hooks.py"
 python3 "$ROOT/scripts/prepare_ksu_legacy.py"
+# SUSFS-aware reference fork requires the per-thread umount-state helpers.
+# Port from the related Realme SM7125 source, checking TIF bit ownership.
+python3 "$ROOT/scripts/v3/port_umount_flag.py"
 
 # Fail closed if a device driver or DTB source was touched.
 if git -C "$K" diff --name-only | grep -E '^(drivers/(input|gpu|media|power|soc|staging|fingerprint|misc)|sound|arch/arm64/boot/dts)/'; then
