@@ -1,0 +1,58 @@
+name: V2 SUSFS 4.14 Compatibility Audit (NO KERNEL BUILD)
+
+on:
+  push:
+    branches: [v2-susfs-compatibility]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v2-susfs-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source-preflight:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    env:
+      KERNEL_SHA: 10380039ddcd6ead841e1fc4ca744a2dd6e92fb8
+      KSU_SHA: b933b1f728116a456fbebf27b6a8772a640cdf23
+      SUSFS_SHA: 77905b5a071e6f3669e3b1814cea30147c0801da
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+      - name: Validate audit script
+        run: |
+          set -euo pipefail
+          python3 -m py_compile scripts/v2/audit_susfs_compatibility.py
+          mkdir -p audit
+      - name: Fetch pinned source trees
+        run: |
+          set -euo pipefail
+          git clone --filter=blob:none --no-checkout https://github.com/realme-atoll/android_kernel_realme_sm7125.git kernel
+          git -C kernel checkout "$KERNEL_SHA"
+          git clone --filter=blob:none --no-checkout https://github.com/KernelSU-Next/KernelSU-Next.git KernelSU-Next
+          git -C KernelSU-Next checkout "$KSU_SHA"
+          git clone --filter=blob:none --no-checkout https://github.com/kutemeikito/susfs4ksu.git susfs4ksu
+          git -C susfs4ksu checkout "$SUSFS_SHA"
+          test "$(git -C kernel rev-parse HEAD)" = "$KERNEL_SHA"
+          test "$(git -C KernelSU-Next rev-parse HEAD)" = "$KSU_SHA"
+          test "$(git -C susfs4ksu rev-parse HEAD)" = "$SUSFS_SHA"
+      - name: Run read-only modern KernelSU x SUSFS source ABI audit
+        run: python3 scripts/v2/audit_susfs_compatibility.py
+      - name: Verify source trees remain unchanged
+        run: |
+          set -euo pipefail
+          test -z "$(git -C kernel status --porcelain)"
+          test -z "$(git -C KernelSU-Next status --porcelain)"
+          test -z "$(git -C susfs4ksu status --porcelain)"
+          grep -Fq 'NOT A SUSFS BUILD' audit/V2-SUSFS-compatibility-preflight.txt
+      - name: Upload audit report (NOT flashable)
+        uses: actions/upload-artifact@v4
+        with:
+          name: A16-V2-SUSFS-SOURCE-AUDIT-NONFLASHABLE
+          retention-days: 14
+          if-no-files-found: error
+          path: audit/V2-SUSFS-compatibility-preflight.txt
