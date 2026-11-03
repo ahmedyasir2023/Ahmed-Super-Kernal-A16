@@ -1,0 +1,23 @@
+name: V4 DT2W Acceptance Tool Static Validation
+
+on:
+  push:
+    branches: [v4-dt2w-acceptance-tests]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Syntax and CLI only, no device action
+        run: |
+          set -euo pipefail
+          python3 -m py_compile tools/verify_dt2w_after_reboot.py scripts/v4/patch_dt2w_default.py
+          python3 tools/verify_dt2w_after_reboot.py --help
+          grep -Fq 'Optional' tools/verify_dt2w_after_reboot.py
+          grep -Fq 'uint8_t DouTap_enable = 1;' scripts/v4/patch_dt2w_default.py
