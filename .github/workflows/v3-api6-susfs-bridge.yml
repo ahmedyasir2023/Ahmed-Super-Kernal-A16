@@ -1,0 +1,62 @@
+name: V3 Working API6 SUSFS Bridge Gap Audit (NO BUILD)
+
+on:
+  push:
+    branches: [v3-api6-susfs-bridge]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v3-api6-bridge-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bridge-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    env:
+      ROOT_KSU_SHA: b933b1f728116a456fbebf27b6a8772a640cdf23
+      SUSFS_FORK_SHA: d999a2aff11575c6e2f520129ecffb7c6058fb02
+      SUSFS_SHA: 77905b5a071e6f3669e3b1814cea30147c0801da
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate audit source syntax
+        run: |
+          set -euo pipefail
+          python3 -m py_compile scripts/v3/audit_api6_bridge.py
+          mkdir -p audit
+      - name: Fetch pinned API6 baseline, reference SUSFS fork and SUSFS 1.5.5
+        run: |
+          set -euo pipefail
+          git clone --filter=blob:none --no-checkout https://github.com/KernelSU-Next/KernelSU-Next.git KernelSU-Next
+          git -C KernelSU-Next checkout "$ROOT_KSU_SHA"
+          git clone --filter=blob:none --no-checkout https://github.com/sidex15/KernelSU-Next.git KSU-SUSFS-Reference
+          git -C KSU-SUSFS-Reference checkout "$SUSFS_FORK_SHA"
+          git clone --filter=blob:none --no-checkout https://github.com/kutemeikito/susfs4ksu.git susfs4ksu
+          git -C susfs4ksu checkout "$SUSFS_SHA"
+          test "$(git -C KernelSU-Next rev-parse HEAD)" = "$ROOT_KSU_SHA"
+          test "$(git -C KSU-SUSFS-Reference rev-parse HEAD)" = "$SUSFS_FORK_SHA"
+          test "$(git -C susfs4ksu rev-parse HEAD)" = "$SUSFS_SHA"
+      - name: Compare older SUSFS bridge with working API6
+        run: python3 scripts/v3/audit_api6_bridge.py
+      - name: Prove source audit is read-only and never flashable
+        run: |
+          set -euo pipefail
+          test -z "$(git -C KernelSU-Next status --porcelain)"
+          test -z "$(git -C KSU-SUSFS-Reference status --porcelain)"
+          test -z "$(git -C susfs4ksu status --porcelain)"
+          grep -Fq 'NOT FLASHABLE' audit/v3-api6-bridge-gap.txt
+          test -s audit/v3-api6-bridge-gap.json
+          test -s audit/v3-api6-bridge-gap.txt
+      - name: Publish nonflashable bridge gap report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: A16-V3-API6-SUSFS-BRIDGE-GAP-AUDIT
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            audit/v3-api6-bridge-gap.txt
+            audit/v3-api6-bridge-gap.json
