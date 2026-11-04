@@ -10,7 +10,7 @@ end = src.index("#ifdef CONFIG_ZRAM_WRITEBACK", begin)
 block = src[begin:end]
 fmt = '"%8llu %8llu %8llu %8lu %8ld %8llu %8lu\\n",'
 assert block.count(fmt) == 1, "mm_stat must publish exactly 7 supported fields"
-assert len(re.findall(r"%(?:\\d+)?(?:llu|lu|ld)", fmt)) == 7
+assert len(re.findall(r"%(?:[0-9]+)?(?:llu|lu|ld)", fmt)) == 7
 assert block.count("scnprintf(") == 1
 required = (
     "orig_size << PAGE_SHIFT,",
