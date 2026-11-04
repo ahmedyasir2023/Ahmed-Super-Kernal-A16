@@ -46,13 +46,9 @@ for enable,cmd,panic,stored in itertools.product(
 diff=subprocess.check_output(["git","-C",str(k),"diff","--",
   "drivers/power/reset/msm-poweroff.c"],text=True)
 assert diff.count("@@")==4,"Expected only two small source hunks"
-for line in diff.splitlines():
-    if line.startswith("+") and not line.startswith("+++"):
-        assert ("ay_" in line or "module_param_named" in line or
-                "MODULE_PARM_DESC" in line or "root-only" in line or
-                "0: vendor" in line or "normal reboot" in line or
-                "supervised" in line or "Do not modify" in line or
-                "need_warm_reset" in line or "pr_notice" in line or
-                "(!cmd" in line or "*/" in line or "* " in line or
-                line == "+") ,line
+assert diff.count("+static bool ay_normal_warm_reset_probe;")==1
+assert diff.count("+\tif (!in_panic && READ_ONCE(ay_normal_warm_reset_probe) &&")==1
+assert diff.count("+\t\tneed_warm_reset = true;")==1
+assert "-\t\tqpnp_pon_system_pwr_off(PON_POWER_OFF_HARD_RESET);" not in diff
+assert "-\t\tqpnp_pon_system_pwr_off(PON_POWER_OFF_WARM_RESET);" not in diff
 print("V7.7 warm reboot: default OFF; root 0600; scoped ordinary-only A/B PASS")
