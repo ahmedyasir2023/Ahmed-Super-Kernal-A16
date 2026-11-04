@@ -278,8 +278,13 @@ jobs:
           CPU=drivers/cpufreq/cpu-boost.c
           test "$(git -C kernel diff --numstat -- "$TOUCH")" = "$(printf '1\t1\t%s' "$TOUCH")"
           test -n "$(git -C kernel diff -- "$CPU")"
-          # Only these two vendor drivers may differ from the pinned ROM.
-          if git -C kernel diff --name-only | grep -E '^(drivers/(input|gpu|media|power|soc|staging|fingerprint|misc)|sound|arch/arm64/boot/dts)/' | grep -Fvx "$TOUCH" | grep -Fvx "$CPU"; then
+          # RC2 adds only the root-only normal-reboot PMIC probe.
+          # Re-validate its exact source diff before allowing this path.
+          python3 scripts/v7/validate_v7_7_reboot_warm_probe.py
+          RESTART=drivers/power/reset/msm-poweroff.c
+          test -n "$(git -C kernel diff -- "$RESTART")"
+          # Still reject every other changed vendor driver and every DTB.
+          if git -C kernel diff --name-only | grep -E '^(drivers/(input|gpu|media|power|soc|staging|fingerprint|misc)|sound|arch/arm64/boot/dts)/' | grep -Fvx "$TOUCH" | grep -Fvx "$CPU" | grep -Fvx "$RESTART"; then
             echo 'Unauthorized vendor driver / DTB modification — blocked'
             exit 1
           fi
