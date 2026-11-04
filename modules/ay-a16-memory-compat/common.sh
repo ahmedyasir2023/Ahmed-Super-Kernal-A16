@@ -1,8 +1,8 @@
 #!/system/bin/sh
 # AY A16 V7.3 Memory Compatibility: strictly scoped and fail-closed.
 # Uses AY_TEST_ROOT only for offline unit tests. On-device this is unset.
-MODDIR=\${0%/*}
-ROOT=\${AY_TEST_ROOT:-}
+MODDIR=${0%/*}
+ROOT=${AY_TEST_ROOT:-}
 CG="$ROOT/sys/fs/cgroup/memory/bg/memory.swappiness"
 RC="$ROOT/vendor/etc/init/hw/init.qcom.rc"
 STATE="$MODDIR/original_swappiness"

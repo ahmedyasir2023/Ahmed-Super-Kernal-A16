@@ -1,5 +1,5 @@
 #!/system/bin/sh
-MODDIR=\${0%/*}
+MODDIR=${0%/*}
 . "$MODDIR/common.sh"
 # KernelSU Manager action button toggles live test + reverts without reboot.
 if [ -f "$PAUSE" ]; then

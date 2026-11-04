@@ -1,5 +1,5 @@
 #!/system/bin/sh
-MODDIR=\${0%/*}
+MODDIR=${0%/*}
 . "$MODDIR/common.sh"
 # KernelSU late-start service stage; never change early-boot policy.
 [ -f "$PAUSE" ] && exit 0
