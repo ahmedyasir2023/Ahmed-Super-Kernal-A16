@@ -1,0 +1,25 @@
+name: V7.7 Release-Integrity Synthetic Tests (NO FLASH)
+on:
+  push:
+    branches: [v7-7-release-candidate-integrity]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-release-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate tools and reject shell flash commands
+        run: |
+          set -euo pipefail
+          python3 -m py_compile scripts/release/ay_v76_preflash_dryrun.py scripts/release/ay_v77_gzip_fit_gate.py tests/test_preflash_dryrun.py tests/test_v77_gzip_fit_gate.py
+          ! grep -Eq '(^|[^A-Za-z])(fastboot|flash_image|dd if=|/dev/block/bootdevice|os\.system\()' scripts/release/ay_v77_gzip_fit_gate.py scripts/release/ay_v76_preflash_dryrun.py
+          test ! -f boot.img
+      - name: Synthetic boot-v2, AVB and gzip source guards
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests -p 'test_preflash_dryrun.py' -v
+          python3 -m unittest discover -s tests -p 'test_v77_gzip_fit_gate.py' -v
+          echo 'Offline release source validated. No user Boot, no partition writes, no flash ZIP.'
