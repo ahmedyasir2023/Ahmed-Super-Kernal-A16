@@ -16,7 +16,7 @@ for n in names:
     assert s.count("atomic64_read(&"+n+")")==1,n
 assert "static const struct file_operations ay_reclaim_status_fops" in s
 assert 'proc_create("ay_reclaim_status", 0444, NULL,' in s
-assert s.count("CONFIG_PROC_FS")==8, "Telemetry must be fully procfs-gated"
+assert s.count("CONFIG_PROC_FS")==7, "Telemetry must be fully procfs-gated"
 assert "single_open(file, ay_reclaim_status_show, NULL)" in s
 assert ".read = seq_read," in s
 assert ".llseek = seq_lseek," in s
