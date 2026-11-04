@@ -1,0 +1,30 @@
+name: V7.6 Preflash Integrity DRY RUN (NO FLASH)
+on:
+  push:
+    branches: [v7-6-preflash-integrity]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  synthetic-boot-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Python and refuse install commands
+        run: |
+          set -euo pipefail
+          python3 -m py_compile scripts/release/ay_v76_preflash_dryrun.py tests/test_preflash_dryrun.py
+          python3 scripts/release/ay_v76_preflash_dryrun.py --help > /dev/null
+          ! grep -Eq '(^|[^A-Za-z])(fastboot|flash_image|dd if=|/dev/block/bootdevice|os\.system\(|subprocess\.run\()' scripts/release/ay_v76_preflash_dryrun.py
+          grep -q 'flashable_artifact_created.*False' scripts/release/ay_v76_preflash_dryrun.py || grep -q 'flashable_artifact_created":False' scripts/release/ay_v76_preflash_dryrun.py
+      - name: Exercise boot v2 and unsigned AVB integrity fail-closed paths
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests -p 'test_preflash_dryrun.py' -v
+          sha256sum scripts/release/ay_v76_preflash_dryrun.py
+      - name: Confirm no boot image packaged
+        run: |
+          set -euo pipefail
+          ! find . -path './.git' -prune -o -type f \( -name 'boot.img' -o -name '*.img' \) -print | grep -q .
+          echo "Synthetic-only tests completed. No flashing, no boot images, no hardware claims."
