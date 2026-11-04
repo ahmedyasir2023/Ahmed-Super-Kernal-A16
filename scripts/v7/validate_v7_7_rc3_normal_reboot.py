@@ -13,7 +13,7 @@ assert s.count("static bool ay_normal_warm_reset_probe = true;")==1
 assert s.count("ay_normal_warm_reset_probe, bool, 0600);")==1
 assert "if (!in_panic && READ_ONCE(ay_normal_warm_reset_probe) &&" in s
 assert ('(!cmd || !cmd[0] || !strcmp(cmd, "reboot") ||\n'
-        '\t     !strcmp(cmd, "normal")))' in s
+        '\t     !strcmp(cmd, "normal")))' in s)
 assert 'AY RC3: normal restart using PMIC warm reset' in s
 
 prepare=s[s.index("static void msm_restart_prepare(const char *cmd)"):
