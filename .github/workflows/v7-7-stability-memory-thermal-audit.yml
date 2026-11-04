@@ -17,6 +17,18 @@ jobs:
           set -euo pipefail
           bash -n scripts/v7/AY_V77_Stability_Probe.sh
           dash -n scripts/v7/AY_V77_Stability_Probe.sh
+          sh -n scripts/v7/AY_V77_Reclaim_AB_Test.sh
+          grep -q '^trap restore 0          python3 -m py_compile scripts/v7/AY_V77_Stability_Analyzer.py tests/test_v77_stability_analyzer.py
+          ! grep -Eq '^[[:space:]]*(reboot|poweroff|setprop|swapoff|swapon|fastboot|dd)[[:space:]]' scripts/v7/AY_V77_Stability_Probe.sh
+      - name: Verify PSI, ZRAM reclaim math and fail-closed inputs
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests -p 'test_v77_stability_analyzer.py' -v
+          echo 'PASS: static memory/Thermal read-only tooling. No boot/kernel files built or flashed.'
+ scripts/v7/AY_V77_Reclaim_AB_Test.sh
+          grep -q 'reclaim_progress_enabled=0' scripts/v7/AY_V77_Reclaim_AB_Test.sh
+          grep -q 'reclaim_progress_enabled=1' scripts/v7/AY_V77_Reclaim_AB_Test.sh
+          grep -q 'init.svc.vendor.thermal-hal' scripts/v7/AY_V77_Reclaim_AB_Test.sh
           python3 -m py_compile scripts/v7/AY_V77_Stability_Analyzer.py tests/test_v77_stability_analyzer.py
           ! grep -Eq '^[[:space:]]*(reboot|poweroff|setprop|swapoff|swapon|fastboot|dd)[[:space:]]' scripts/v7/AY_V77_Stability_Probe.sh
       - name: Verify PSI, ZRAM reclaim math and fail-closed inputs
