@@ -1,0 +1,26 @@
+name: V7.7 Stable Memory/Thermal Audit (READ ONLY)
+on:
+  push:
+    branches: [v7-7-stability-memory-thermal-audit]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  forensic-collector:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static audit of no-write device collector
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n scripts/v7/AY_V77_Stability_Probe.sh
+          dash -n scripts/v7/AY_V77_Stability_Probe.sh
+          python3 -m py_compile scripts/v7/AY_V77_Stability_Analyzer.py tests/test_v77_stability_analyzer.py
+          ! grep -Eq '^[[:space:]]*(reboot|poweroff|setprop|swapoff|swapon|fastboot|dd)[[:space:]]' scripts/v7/AY_V77_Stability_Probe.sh
+      - name: Verify PSI, ZRAM reclaim math and fail-closed inputs
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests -p 'test_v77_stability_analyzer.py' -v
+          echo 'PASS: static memory/Thermal read-only tooling. No boot/kernel files built or flashed.'
