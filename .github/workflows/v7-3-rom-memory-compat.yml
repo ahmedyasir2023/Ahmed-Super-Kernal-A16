@@ -1,0 +1,31 @@
+name: V7.3 ROM Memory Compatibility - KernelSU Module (NO BOOT)
+on:
+  push:
+    branches: [v7-3-rom-memory-compat]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  rom-memory-compat:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate scoped module sources and package
+        run: |
+          set -euo pipefail
+          MOD=modules/ay-a16-memory-compat
+          for f in common service action uninstall; do sh -n "$MOD/$f.sh"; done
+          grep -qx 'id=ay.a16.memory.compat' "$MOD/module.prop"
+          grep -q 'Mon Nov  2 01:02:30 UTC 2026' "$MOD/common.sh"
+          grep -q 'memory.swappiness' "$MOD/common.sh"
+          mkdir -p dist
+          (cd "$MOD" && zip -9 -q -r ../../dist/AY-A16-V7.3-Stage1-EvolutionX-Memory-Compat-KernelSU-NEXT.zip module.prop common.sh service.sh action.sh uninstall.sh skip_mount)
+          unzip -t dist/*.zip
+          sha256sum dist/*.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AY-A16-V7.3-ROM-MEMORY-COMPAT-KERNELSU-MODULE-NOT-ORANGEFOX
+          retention-days: 14
+          if-no-files-found: error
+          path: dist/*.zip

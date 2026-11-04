@@ -1,0 +1,6 @@
+id=ay.a16.memory.compat
+name=AY A16 V7.3 Evolution X Memory Compatibility (Experimental)
+version=7.3.0-test1
+versionCode=7301
+author=Eng. Ahmed Yasir
+description=RMX2170 EvolutionX 2026-11-02: reversible background memcg swappiness correction (140 rejected by kernel; trial=100). No kernel replacement, no global VM, ZRAM or CPU boost changes.
