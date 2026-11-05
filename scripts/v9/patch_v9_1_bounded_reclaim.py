@@ -107,13 +107,20 @@ one(
 		 */
 		if (!READ_ONCE(ay_reclaim_progress) &&
 		    !atomic_long_read(&kswapd_waiters)) {
+			unsigned long ay_v91_last = READ_ONCE(ay_v91_last_extra_jiffies);
+			unsigned long ay_v91_now = jiffies;
 			bool extra_ok = READ_ONCE(ay_v91_bounded_reclaim) &&
 				!ay_v91_extra_this_cycle &&
 				sc.nr_reclaimed > nr_reclaimed &&
 				!pgdat_balanced(pgdat, sc.order, classzone_idx) &&
-				!time_before(jiffies,
-					READ_ONCE(ay_v91_last_extra_jiffies) +
-					msecs_to_jiffies(1000));
+				!time_before(ay_v91_now,
+					ay_v91_last + msecs_to_jiffies(1000));
+
+			/* Global rate-limit even if root enables >1 kswapd. */
+			if (extra_ok &&
+			    cmpxchg(&ay_v91_last_extra_jiffies,
+			            ay_v91_last, ay_v91_now) != ay_v91_last)
+				extra_ok = false;
 
 			if (!extra_ok) {
 #ifdef CONFIG_PROC_FS
@@ -122,7 +129,6 @@ one(
 				break;
 			}
 			ay_v91_extra_this_cycle++;
-			WRITE_ONCE(ay_v91_last_extra_jiffies, jiffies);
 #ifdef CONFIG_PROC_FS
 			atomic64_inc(&ay_v91_extra_passes);
 #endif
@@ -138,7 +144,7 @@ for token in (
     "msecs_to_jiffies(1000)",
     "sc.nr_reclaimed > nr_reclaimed",
     "!pgdat_balanced(pgdat, sc.order, classzone_idx)",
-    "WRITE_ONCE(ay_v91_last_extra_jiffies, jiffies);",
+    "cmpxchg(&ay_v91_last_extra_jiffies,",
     "atomic64_inc(&ay_v91_extra_passes);",
     "atomic64_inc(&ay_v91_waiter_exits);",
     "(!READ_ONCE(ay_reclaim_progress) &&",
