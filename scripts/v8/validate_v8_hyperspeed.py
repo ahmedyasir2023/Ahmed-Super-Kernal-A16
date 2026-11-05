@@ -18,6 +18,7 @@ for key,val in defaults.items():
 for s in (
     "static bool ay_screenoff_saver = true;",
     "static bool ay_instantwake = true;",
+    "#define MIN_INPUT_INTERVAL (100 * USEC_PER_MSEC)",
     "static bool ay_deepdoze_enabled = true;",
     "static unsigned int ay_deepdoze_delay_seconds = 600;",
     "module_param(ay_screen_on, bool, 0444);",
