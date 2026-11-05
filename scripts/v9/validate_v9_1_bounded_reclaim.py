@@ -33,7 +33,7 @@ for term in (
     "!pgdat_balanced(pgdat, sc.order, classzone_idx)",
     "msecs_to_jiffies(1000)",
     "ay_v91_extra_this_cycle++;",
-    "WRITE_ONCE(ay_v91_last_extra_jiffies, jiffies);",
+    "cmpxchg(&ay_v91_last_extra_jiffies,",
     "atomic64_inc(&ay_v91_extra_passes);",
     "atomic64_inc(&ay_v91_waiter_exits);",
     "module_param_named(ay_reclaim_progress, ay_reclaim_progress, bool, 0600);",
@@ -55,7 +55,7 @@ order = [
 ]
 assert order == sorted(order), order
 assert fn.count("ay_v91_extra_this_cycle++;") == 1
-assert fn.count("WRITE_ONCE(ay_v91_last_extra_jiffies, jiffies);") == 1
+assert fn.count("cmpxchg(&ay_v91_last_extra_jiffies,") == 1
 assert s.count("msecs_to_jiffies(1000)") == 1
 
 for term in (
