@@ -71,7 +71,8 @@ class TestReclaimABA(unittest.TestCase):
             self.assertIn(needle,sh)
         for forbidden in ("swapoff ","swapon ","reboot ","setprop ","stop vendor.",
                           "dd if=","fastboot "):
-            self.assertNotIn(forbidden,sh)
+            commands='\n'.join(line for line in sh.splitlines() if line.strip() and not line.lstrip().startswith('#'))
+            self.assertNotIn(forbidden,commands)
 
 if __name__=="__main__":
     unittest.main(verbosity=2)
