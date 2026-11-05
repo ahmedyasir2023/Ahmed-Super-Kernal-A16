@@ -37,6 +37,13 @@ for key, (old, new) in boost_defaults.items():
         "boost parameter "+key)
     assert boost.count(f"module_param({key}, uint, 0444);") == 1
 
+# Lower the vendor 150ms event debounce to 100ms so consecutive real taps
+# and launcher swipes can refresh the bounded 115ms boost; no periodic loop.
+boost = one(boost,
+    "#define MIN_INPUT_INTERVAL (150 * USEC_PER_MSEC)",
+    "#define MIN_INPUT_INTERVAL (100 * USEC_PER_MSEC)",
+    "touch event reboost interval")
+
 # The original run-time sysctl handler is how EvolutionX/vendor init requests
 # factor=200. The guard changes ONLY requests above 50 while it is active.
 # An emergency root-only opt-out is possible (not applied automatically).
