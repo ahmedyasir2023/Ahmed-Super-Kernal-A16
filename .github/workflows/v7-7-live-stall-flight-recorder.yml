@@ -1,0 +1,27 @@
+name: V7.7 Live Stall Flight Recorder (READ ONLY)
+on:
+  push:
+    branches: [v7-7-live-stall-flight-recorder]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  read-only-diagnostics:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check script syntax and refuse device writes
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n scripts/v7/AY_V77_Live_Stall_Recorder.sh
+          dash -n scripts/v7/AY_V77_Live_Stall_Recorder.sh
+          python3 -m py_compile scripts/v7/AY_V77_Live_Stall_Analyzer.py tests/test_v77_live_stall_analyzer.py
+          ! grep -E '^[[:space:]]*(setprop|reboot|poweroff|swapoff|swapon|fastboot|flash_image|dd)[[:space:]]' scripts/v7/AY_V77_Live_Stall_Recorder.sh
+      - name: Verify trigger, PSI counter handling, 4 samples, mode guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests -p 'test_v77_live_stall_analyzer.py' -v
+          echo 'Read-only event triage passed. No kernel compiled or flashed.'
