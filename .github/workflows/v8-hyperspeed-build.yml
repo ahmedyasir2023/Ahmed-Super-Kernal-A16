@@ -313,7 +313,12 @@ jobs:
             echo 'V7.6: runtime counter overhead and device PSI effects require hardware A/B; no battery improvement claimed'
             echo 'V7.7: boot-default OFF with 0600 root-only parameter, preserving V7.2-style reclaim'
             echo 'V7.7: upstream V7.5 reclaim enabled only with explicit root action'
-            echo 'V7.7: no background work, service, persistent property or power policy changes'\n            echo 'V8: touch 78% of allowed CPU range 115ms; wake 85% for 170ms; sched boost 3'\n            echo 'V8: ROM user watermark factor 200 requests capped at 50 by default; opt-out root parameter ay_v8_latency_watermarks'\n            echo 'V8: no maximum frequency pins, no performance governor, no thermal changes, no new daemon'\n            echo 'V8: memory benefits are partial; major faults and direct reclaim may remain high'\n            echo 'V8: source compiled for pinned RMX2170 A16, physical boot validation still required'
+            echo 'V7.7: no background work, service, persistent property or power policy changes'
+            echo 'V8: touch 78% of allowed CPU range 115ms; wake 85% for 170ms; sched boost 3'
+            echo 'V8: ROM user watermark factor 200 requests capped at 50 by default; opt-out root parameter ay_v8_latency_watermarks'
+            echo 'V8: no maximum frequency pins, no performance governor, no thermal changes, no new daemon'
+            echo 'V8: memory benefits are partial; major faults and direct reclaim may remain high'
+            echo 'V8: source compiled for pinned RMX2170 A16, physical boot validation still required'
             echo 'User evidence 17:21 to 17:51 at 86% is stable displayed charge, not a precise 0 mAh measurement'
             echo 'Official KernelSU Next UAPI 6 retained; Root runtime not tested in this lab'
             echo 'No new boot.img or ZIP created'
@@ -336,6 +341,6 @@ jobs:
             audit/config-api6-susfs-core.txt
             audit/v7.4-idle-contract.sha256
             scripts/v7/ay_v74_reclaim_probe.sh
-            audit/v7-deepdoze-600s-build-report.txt
+            audit/v8-hyperspeed-build-report.txt
             kernel/out/arch/arm64/boot/Image.gz
             kernel/out/arch/arm64/boot/dts/**/*.dtb
