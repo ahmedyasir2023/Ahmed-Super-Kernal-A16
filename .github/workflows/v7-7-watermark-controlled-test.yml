@@ -1,0 +1,30 @@
+name: V7.7 Watermark 200-to-50 Controlled A-B-A (NO FLASH)
+on:
+  push:
+    branches: [v7-7-watermark-controlled-test]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  bounded-watermark-test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check shell syntax, sysctl scope, and restore trap
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n scripts/v7/AY_V77_Watermark_ABA_Trial.sh
+          dash -n scripts/v7/AY_V77_Watermark_ABA_Trial.sh
+          python3 -m py_compile scripts/v7/AY_V77_Watermark_ABA_Analyzer.py tests/test_v77_watermark_aba.py
+          grep -Fq 'trap restore 0' scripts/v7/AY_V77_Watermark_ABA_Trial.sh
+          grep -Fq 'BASELINE_QUIET' scripts/v7/AY_V77_Watermark_ABA_Trial.sh
+          grep -Fq 'KNOB=/proc/sys/vm/watermark_scale_factor' scripts/v7/AY_V77_Watermark_ABA_Trial.sh
+          ! grep -Eq '^[[:space:]]*(reboot|poweroff|setprop|swapoff|swapon|fastboot|dd)[[:space:]]' scripts/v7/AY_V77_Watermark_ABA_Trial.sh
+      - name: Validate A-B-A data and failure handling
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests -p 'test_v77_watermark_aba.py' -v
+          echo 'PASS: test tooling only; no kernel image compiled or device settings applied.'
