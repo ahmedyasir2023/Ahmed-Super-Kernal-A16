@@ -23,7 +23,7 @@ jobs:
           grep -Fq 'reclaim_progress_enabled=0' scripts/v7/AY_V77_Reclaim_AB_Test.sh
           grep -Fq 'reclaim_progress_enabled=1' scripts/v7/AY_V77_Reclaim_AB_Test.sh
           grep -Fq 'init.svc.vendor.thermal-hal' scripts/v7/AY_V77_Reclaim_AB_Test.sh
-          python3 -m py_compile scripts/v7/AY_V77_Stability_Analyzer.py tests/test_v77_stability_analyzer.py
+          python3 -m py_compile scripts/v7/AY_V77_Stability_Analyzer.py tests/test_v77_stability_analyzer.py scripts/v7/AY_V77_Reclaim_AB_Analyzer.py tests/test_v77_reclaim_ab_analyzer.py
           ! grep -Eq '^[[:space:]]*(reboot|poweroff|setprop|swapoff|swapon|fastboot|dd)[[:space:]]' scripts/v7/AY_V77_Stability_Probe.sh
           ! grep -Eq '^[[:space:]]*(reboot|poweroff|setprop|swapoff|swapon|fastboot|dd)[[:space:]]' scripts/v7/AY_V77_Reclaim_AB_Test.sh
       - name: Unit tests (memory PSI and fail-closed handling)
@@ -31,4 +31,5 @@ jobs:
         run: |
           set -euo pipefail
           python3 -m unittest discover -s tests -p 'test_v77_stability_analyzer.py' -v
+          python3 -m unittest discover -s tests -p 'test_v77_reclaim_ab_analyzer.py' -v
           echo 'PASS: no boot image, no partition flashing, only volatile opted-in memory-reclaim AB'
