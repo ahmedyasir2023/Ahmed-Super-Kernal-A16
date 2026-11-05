@@ -1,0 +1,341 @@
+name: V8 HyperSpeed + Reclaim Guard + Root/DT2W Build
+
+on:
+  push:
+    branches: [v8-hyperspeed-ram-reclaim]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v8-hyperspeed-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  susfs-api6-core:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 330
+    env:
+      KERNEL_SHA: 10380039ddcd6ead841e1fc4ca744a2dd6e92fb8
+      KSU_SHA: b933b1f728116a456fbebf27b6a8772a640cdf23
+      SUSFS_SHA: 77905b5a071e6f3669e3b1814cea30147c0801da
+      CLANG_URL: https://github.com/SA9990/Toolchain/releases/download/clang-r563880c/clang-r563880c.tar.gz
+      CLANG_SHA256: 57b456636aa9c3f5e159bc1dd6eddd7c6de654281cad84376e408a5d35f91bab
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Validate project scripts before expensive source downloads
+        run: |
+          set -euo pipefail
+          for script in scripts/v2/integrate_root.sh scripts/v3/stage_api6_susfs_core.sh scripts/v3/build_api6_susfs_core.sh; do
+            bash -n "$script"
+          done
+          python3 -m py_compile scripts/v2/manual_hooks.py scripts/prepare_ksu_legacy.py scripts/port_susfs_patch.py scripts/verify_boot_dtb.py scripts/v3/patch_api6_susfs_logging.py scripts/v3/patch_api6_susfs_uname.py scripts/v3/patch_api6_susfs_appstate.py scripts/v3/patch_api6_susfs_path.py scripts/v3/validate_path_bridge.py scripts/v4/patch_dt2w_default.py scripts/v5/patch_ay_input_boost.py scripts/v5/validate_ay_input_boost.py scripts/v6/patch_screen_wake_boost.py scripts/v6/validate_screen_wake_boost.py scripts/v7/patch_deepdoze_600s.py scripts/v7/validate_deepdoze_600s.py scripts/v7/patch_v7_1_wake_race.py scripts/v7/validate_v7_1_wake_race.py scripts/v7/preflash_audit.py scripts/v7/patch_v7_1_1_panel_state.py scripts/v7/validate_v7_1_1_panel_state.py scripts/v7/patch_v7_2_zram_mmstat.py scripts/v7/validate_v7_2_zram_mmstat.py scripts/v7/patch_v7_2_boost_lock.py scripts/v7/validate_v7_2_boost_lock.py scripts/v7/patch_v7_3_kswapd_hotplug.py scripts/v7/validate_v7_3_kswapd_hotplug.py scripts/v7/validate_v7_3_idlesafe.py scripts/v7/patch_v7_4_zram_dedup_account.py scripts/v7/validate_v7_4_zram_dedup_account.py scripts/v7/patch_v7_5_reclaim_progress.py scripts/v7/validate_v7_5_reclaim_progress.py scripts/v7/patch_v7_6_reclaim_observability.py scripts/v7/validate_v7_6_reclaim_observability.py scripts/v7/patch_v7_7_reclaim_ab_guarded.py scripts/v7/validate_v7_7_reclaim_ab_guarded.py scripts/v8/patch_v8_hyperspeed.py scripts/v8/validate_v8_hyperspeed.py
+          sh -n scripts/v7/ay_v74_reclaim_probe.sh
+          echo 'Bash and Python source syntax checks passed'
+          python3 scripts/v7/preflash_audit.py --self-test
+
+      - name: Install build dependencies
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y build-essential git python3 bc bison flex libssl-dev libelf-dev libncurses-dev curl ca-certificates tar gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu ccache rsync pahole device-tree-compiler gzip xz-utils
+          mkdir -p audit
+
+      - name: Reuse pinned Android Clang 21
+        id: clang-cache
+        uses: actions/cache@v4
+        with:
+          path: toolchain
+          key: android-clang-r563880c-linux-x86_64-v1
+
+      - name: Fetch and validate Android Clang 21 if uncached
+        if: steps.clang-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 5 "$CLANG_URL" -o /tmp/toolchain.tar.gz
+          echo "$CLANG_SHA256  /tmp/toolchain.tar.gz" | sha256sum --check -
+          mkdir -p toolchain
+          tar -xzf /tmp/toolchain.tar.gz -C toolchain
+          rm -f /tmp/toolchain.tar.gz
+
+      - name: Verify Clang toolchain
+        run: |
+          set -euo pipefail
+          CLANG_PATH="$(find -L toolchain -name clang -type f -print -quit)"
+          test -n "$CLANG_PATH"
+          CLANG_BIN="$(cd "$(dirname "$CLANG_PATH")" && pwd)"
+          for name in clang clang++ ld.lld llvm-ar llvm-nm llvm-objcopy llvm-objdump llvm-strip; do test -x "$CLANG_BIN/$name"; done
+          "$CLANG_BIN/clang" --version | tee audit/compiler.txt
+          grep -q '21.0.0' audit/compiler.txt
+          echo "CLANG_BIN=$CLANG_BIN" >> "$GITHUB_ENV"
+
+      - name: Checkout original ROM kernel and official KernelSU Next Legacy
+        run: |
+          set -euo pipefail
+          git clone --filter=blob:none --no-checkout https://github.com/realme-atoll/android_kernel_realme_sm7125.git kernel
+          git -C kernel checkout "$KERNEL_SHA"
+          test "$(git -C kernel rev-parse HEAD)" = "$KERNEL_SHA"
+          git clone --filter=blob:none --no-checkout https://github.com/KernelSU-Next/KernelSU-Next.git KernelSU-Next
+          git -C KernelSU-Next checkout "$KSU_SHA"
+          test "$(git -C KernelSU-Next rev-parse HEAD)" = "$KSU_SHA"
+          test -f kernel/arch/arm64/configs/atoll_defconfig
+          test -f KernelSU-Next/kernel/Kbuild
+          grep -qx 'SUBLEVEL = 336' kernel/Makefile
+          test -z "$(git -C kernel status --porcelain)"
+          git clone --filter=blob:none --no-checkout https://github.com/kutemeikito/susfs4ksu.git susfs4ksu
+          git -C susfs4ksu checkout "$SUSFS_SHA"
+          test "$(git -C susfs4ksu rev-parse HEAD)" = "$SUSFS_SHA"
+
+      - name: Stage SUSFS core and exact verified API6 root hooks
+        run: bash scripts/v3/stage_api6_susfs_core.sh
+
+      - name: Enable Realme double-tap from kernel touch init (no Android service)
+        run: |
+          set -euo pipefail
+          python3 scripts/v4/patch_dt2w_default.py
+          TOUCH=drivers/input/touchscreen/oppo_touchscreen/touchpanel_common_driver.c
+          test "$(git -C kernel diff --numstat -- "$TOUCH")" = "$(printf '1\t1\t%s' "$TOUCH")"
+          grep -Fq 'uint8_t DouTap_enable = 1;' "kernel/$TOUCH"
+          grep -Fq 'GESTURE_ATTR(double_tap, DouTap_enable);' "kernel/$TOUCH"
+          grep -Fq 'ts->gesture_enable = 1;' "kernel/$TOUCH"
+          git -C kernel -c core.whitespace=-blank-at-eol diff --check
+
+      - name: Enable bounded automatic input performance boost in Realme CPUFreq driver
+        run: |
+          set -euo pipefail
+          python3 scripts/v5/patch_ay_input_boost.py
+          python3 scripts/v5/validate_ay_input_boost.py
+          CPU=drivers/cpufreq/cpu-boost.c
+          test -n "$(git -C kernel diff -- "$CPU")"
+          git -C kernel -c core.whitespace=-blank-at-eol diff --check
+
+      - name: Integrate DRM screen-off saver and bounded instant wake response
+        run: |
+          set -euo pipefail
+          python3 scripts/v6/patch_screen_wake_boost.py
+          python3 scripts/v6/validate_screen_wake_boost.py
+          grep -Fq 'MSM_DRM_BLANK_POWERDOWN' kernel/drivers/cpufreq/cpu-boost.c
+          grep -Fq 'MSM_DRM_BLANK_UNBLANK' kernel/drivers/cpufreq/cpu-boost.c
+          git -C kernel -c core.whitespace=-blank-at-eol diff --check
+
+      - name: Apply 600-second DeepDoze policy cap and wake release
+        run: |
+          set -euo pipefail
+          python3 scripts/v7/patch_deepdoze_600s.py
+          python3 scripts/v7/validate_deepdoze_600s.py
+          git -C kernel -c core.whitespace=-blank-at-eol diff --check
+
+      - name: V7.1 wake/reblank race fix and ROM compatibility audit
+        run: |
+          set -euo pipefail
+          python3 scripts/v7/patch_v7_1_wake_race.py
+          python3 scripts/v7/validate_v7_1_wake_race.py
+          # Re-run the base V7 contract AFTER V7.1 changes, not just before.
+          # Fail here instead of wasting minutes compiling a broken contract.
+          python3 scripts/v7/validate_deepdoze_600s.py
+          git -C kernel -c core.whitespace=-blank-at-eol diff --check
+
+      - name: Guard wake state when screen-off saver toggle changes
+        run: |
+          set -euo pipefail
+          python3 scripts/v7/patch_v7_1_1_panel_state.py
+          python3 scripts/v7/validate_v7_1_1_panel_state.py
+          python3 scripts/v7/validate_deepdoze_600s.py
+          python3 scripts/v7/validate_v7_1_wake_race.py
+          git -C kernel -c core.whitespace=-blank-at-eol diff --check
+
+      - name: V7.2 fix malformed ZRAM mm_stat and retain exact HyperSpeed defaults
+        run: |
+          set -euo pipefail
+          python3 scripts/v7/patch_v7_2_zram_mmstat.py
+          python3 scripts/v7/validate_v7_2_zram_mmstat.py
+          python3 scripts/v7/patch_v7_2_boost_lock.py
+          python3 scripts/v7/validate_v7_2_boost_lock.py
+          python3 scripts/v6/validate_screen_wake_boost.py
+          python3 scripts/v7/validate_deepdoze_600s.py
+          python3 scripts/v7/validate_v7_1_1_panel_state.py
+          git -C kernel -c core.whitespace=-blank-at-eol diff --check
+
+      - name: V7.3 keep proven V7.2 offscreen behavior bit-identical and guard reclaim hotplug
+        run: |
+          set -euo pipefail
+          mkdir -p audit
+          sha256sum kernel/drivers/cpufreq/cpu-boost.c kernel/drivers/input/touchscreen/oppo_touchscreen/touchpanel_common_driver.c > audit/v7.4-idle-contract.sha256
+          python3 scripts/v7/patch_v7_3_kswapd_hotplug.py
+          python3 scripts/v7/validate_v7_3_kswapd_hotplug.py
+          python3 scripts/v7/validate_v7_3_idlesafe.py
+          sha256sum --check audit/v7.4-idle-contract.sha256
+          python3 scripts/v7/validate_deepdoze_600s.py
+          python3 scripts/v7/validate_v7_1_wake_race.py
+          python3 scripts/v7/validate_v7_1_1_panel_state.py
+          python3 scripts/v7/validate_v7_2_zram_mmstat.py
+          python3 scripts/v7/validate_v7_2_boost_lock.py
+          git -C kernel -c core.whitespace=-blank-at-eol diff --check
+
+      - name: V7.4 repair physical ZRAM dedup compressed-byte accounting
+        run: |
+          set -euo pipefail
+          python3 scripts/v7/patch_v7_4_zram_dedup_account.py
+          python3 scripts/v7/validate_v7_4_zram_dedup_account.py
+          python3 scripts/v7/validate_v7_3_idlesafe.py
+          sha256sum --check audit/v7.4-idle-contract.sha256
+          git -C kernel -c core.whitespace=-blank-at-eol diff --check
+
+      - name: V7.5 restore watermark-driven kswapd reclaim; check screen-off power invariants
+        run: |
+          set -euo pipefail
+          python3 scripts/v7/patch_v7_5_reclaim_progress.py
+          python3 scripts/v7/validate_v7_5_reclaim_progress.py
+          python3 scripts/v7/validate_v7_4_zram_dedup_account.py
+          python3 scripts/v7/validate_v7_3_idlesafe.py
+          sha256sum --check audit/v7.4-idle-contract.sha256
+          git -C kernel -c core.whitespace=-blank-at-eol diff --check
+
+      - name: V7.6 add read-only reclaim observability with no new timers or power changes
+        run: |
+          set -euo pipefail
+          python3 scripts/v7/patch_v7_6_reclaim_observability.py
+          python3 scripts/v7/validate_v7_6_reclaim_observability.py
+          python3 scripts/v7/validate_v7_4_zram_dedup_account.py
+          python3 scripts/v7/validate_v7_3_idlesafe.py
+          sha256sum --check audit/v7.4-idle-contract.sha256
+          git -C kernel -c core.whitespace=-blank-at-eol diff --check
+
+      - name: V7.7 guard upstream reclaim with boot-default OFF, root-only A/B
+        run: |
+          set -euo pipefail
+          python3 scripts/v7/patch_v7_7_reclaim_ab_guarded.py
+          python3 scripts/v7/validate_v7_7_reclaim_ab_guarded.py
+          python3 scripts/v7/validate_v7_4_zram_dedup_account.py
+          python3 scripts/v7/validate_v7_3_idlesafe.py
+          sha256sum --check audit/v7.4-idle-contract.sha256
+          git -C kernel -c core.whitespace=-blank-at-eol diff --check
+
+      - name: Apply V8 HyperSpeed and measured reclaim-watermark response (no power governor lock)
+        run: |
+          set -euo pipefail
+          python3 scripts/v8/patch_v8_hyperspeed.py
+          python3 scripts/v8/validate_v8_hyperspeed.py
+          python3 scripts/v7/validate_v7_7_reclaim_ab_guarded.py
+          python3 scripts/v7/validate_deepdoze_600s.py
+          python3 scripts/v7/validate_v7_1_wake_race.py
+          python3 scripts/v7/validate_v7_1_1_panel_state.py
+          git -C kernel -c core.whitespace=-blank-at-eol diff --check
+
+      - name: Verify fail-closed API6 path-only source and permission contract
+        run: python3 scripts/v3/validate_path_bridge.py
+      - name: Compile ARM64 with official Root and isolated SUSFS path VFS hooks
+        run: bash scripts/v3/build_api6_susfs_path.sh
+
+      - name: Verify API6 Root and SUSFS core objects, plus original DTB
+        run: |
+          set -euo pipefail
+          test -s kernel/out/arch/arm64/boot/Image.gz
+          gzip -t kernel/out/arch/arm64/boot/Image.gz
+          test -s kernel/out/vmlinux
+          test -s kernel/out/drivers/kernelsu/kernelsu.o
+          test -s kernel/out/fs/susfs.o
+          # Verify the exactly scoped, read-only SUSFS metadata bridge is present.
+          grep -Fq 'arg2 == CMD_SUSFS_SHOW_VERSION' kernel/kernel/sys.c
+          grep -Fq 'arg2 == CMD_SUSFS_SHOW_ENABLED_FEATURES' kernel/kernel/sys.c
+          grep -Fq 'u64 enabled_features = (1ULL << 0) | (1ULL << 8) | (1ULL << 9)' kernel/kernel/sys.c
+          grep -Fq 'susfs_set_log(arg3 != 0)' kernel/kernel/sys.c
+          grep -Fq 'susfs_set_uname(' kernel/kernel/sys.c
+          grep -Fq 'CMD_SUSFS_SHOW_VARIANT' kernel/kernel/sys.c
+          if git -C kernel diff --name-only | grep -Fq 'kernel/sys.c'; then
+            echo 'Root-gated SUSFS path+uname+logging bridge staged; mount/kstat hiding deliberately disabled.'
+          else
+            echo 'Missing expected prctl bridge source'; exit 1
+          fi
+          test -s kernel/out/vmlinux
+          grep -qx 'CONFIG_KSU=y' kernel/out/.config
+          grep -qx 'CONFIG_KSU_MANUAL_HOOK=y' kernel/out/.config
+          grep -qx 'CONFIG_KSU_SUSFS=y' kernel/out/.config
+          grep -qx 'CONFIG_KSU_SUSFS_ENABLE_LOG=y' kernel/out/.config
+          grep -qx 'CONFIG_KSU_SUSFS_SPOOF_UNAME=y' kernel/out/.config
+          grep -qx 'CONFIG_KSU_SUSFS_PROC_TRACK=y' kernel/out/.config
+          grep -qx 'CONFIG_KSU_SUSFS_SUS_PATH=y' kernel/out/.config
+          grep -qx 'CONFIG_CPU_BOOST=y' kernel/out/.config
+          grep -qx 'CONFIG_DRM_MSM=y' kernel/out/.config
+          python3 scripts/v7/validate_deepdoze_600s.py
+          python3 scripts/v7/validate_v7_1_wake_race.py
+          python3 scripts/v7/validate_v7_1_1_panel_state.py
+          python3 scripts/v7/validate_v7_2_zram_mmstat.py
+          python3 scripts/v7/validate_v7_3_kswapd_hotplug.py
+          python3 scripts/v7/validate_v7_4_zram_dedup_account.py
+          python3 scripts/v7/validate_v7_7_reclaim_ab_guarded.py
+          python3 scripts/v8/validate_v8_hyperspeed.py
+          grep -q '^CONFIG_PROC_FS=y$' kernel/out/.config
+          grep -q '^CONFIG_SYSFS=y$' kernel/out/.config
+          grep -Fq '#define KERNEL_SU_UAPI_VERSION 6' KernelSU-Next/uapi/supercall.h
+          python3 scripts/verify_boot_dtb.py
+          TOUCH=drivers/input/touchscreen/oppo_touchscreen/touchpanel_common_driver.c
+          CPU=drivers/cpufreq/cpu-boost.c
+          test "$(git -C kernel diff --numstat -- "$TOUCH")" = "$(printf '1\t1\t%s' "$TOUCH")"
+          test -n "$(git -C kernel diff -- "$CPU")"
+          # Only these two vendor drivers may differ from the pinned ROM.
+          if git -C kernel diff --name-only | grep -E '^(drivers/(input|gpu|media|power|soc|staging|fingerprint|misc)|sound|arch/arm64/boot/dts)/' | grep -Fvx "$TOUCH" | grep -Fvx "$CPU"; then
+            echo 'Unauthorized vendor driver / DTB modification — blocked'
+            exit 1
+          fi
+          cp kernel/out/.config audit/config-api6-susfs-core.txt
+          {
+            echo 'V8 HYPERSPEED — 78%/115ms TOUCH + 85%/170ms WAKE + 50 WATERMARK CAP — SOURCE-ONLY'
+            echo "Android clang: $(head -n 1 audit/compiler.txt)"
+            echo "Kernel SHA: $(git -C kernel rev-parse HEAD)"
+            echo "KernelSU SHA: $(git -C KernelSU-Next rev-parse HEAD)"
+            echo "KernelSU mode: manual hooks for Linux 4.14"
+            echo "Image.gz SHA-256: $(sha256sum kernel/out/arch/arm64/boot/Image.gz)"
+            echo 'SUSFS API6 path+uname+logging; feature mask 0x301; mount/kstat hiding NOT enabled'
+            echo 'Touch driver default DouTap_enable=1; original probe gesture=1'
+            echo 'AY adaptive input 72%, 105ms cap 140ms; wake 82%, 155ms cap 180ms'
+            echo 'Panel blank: release input/WALT; one-shot deferrable 600s timer then cap CPU policy max to allowed min'
+            echo 'No max frequency pins, thermal/SELinux/DTB bypass or active polling'
+            echo 'On unblank: cancel timer and remove CPU cap before InstantWake; runtime DT2W/app speed NOT yet verified'
+            echo 'V7.1: last-blank deadline check avoids an early cap after rapid off/on/off transitions'
+            echo 'V7.1.1: all panel notifications update screen state even if saver disabled; timer gated'
+            echo 'V7.2: ZRAM mm_stat prints 7 actually populated fields, no stale stack-derived counters'
+            echo 'V7.2 baseline preserved until V8 upgrade: touch/wake limits are read-only and deepdoze 600s unchanged'
+            echo 'V7.5 changes the vendor kswapd exit condition; ZRAM compression, LMKD and thermal policy unchanged'
+            echo 'V7.3: V7.2 CPUBoost, screen-off/deepdoze, touch and ZRAM source byte-for-byte unchanged'
+            echo 'V7.3: NULL thread guard for vendor multi-kswapd CPU-online callback; NO reduction in reclaim pressure claimed'
+            echo 'V7.4: physical ZRAM compressed bytes decremented only after last dedup reference'
+            echo 'V7.4: read-only dedup_stat; no new timers, no dedup enablement changes'
+            echo 'V7.4: memory PSI and kswapd performance still require physical testing'
+            echo 'V7.5: restore watermark-driven balance_pgdat without vendor waiter-zero early exit'
+            echo 'V7.5: freezer/stop, priority, watermark and failure accounting remain unchanged'
+            echo 'V7.5: potentially increased reclaim while memory zones are under pressure; battery and latency effects unverified'
+            echo 'V7.5: no additional timers; V7.2 screen-off driver unchanged'
+            echo 'V7.6: read-only /proc/ay_reclaim_status counters; no sampling timers, daemons or kernel sysctl writes'
+            echo 'V7.6: runtime counter overhead and device PSI effects require hardware A/B; no battery improvement claimed'
+            echo 'V7.7: boot-default OFF with 0600 root-only parameter, preserving V7.2-style reclaim'
+            echo 'V7.7: upstream V7.5 reclaim enabled only with explicit root action'
+            echo 'V7.7: no background work, service, persistent property or power policy changes'\n            echo 'V8: touch 78% of allowed CPU range 115ms; wake 85% for 170ms; sched boost 3'\n            echo 'V8: ROM user watermark factor 200 requests capped at 50 by default; opt-out root parameter ay_v8_latency_watermarks'\n            echo 'V8: no maximum frequency pins, no performance governor, no thermal changes, no new daemon'\n            echo 'V8: memory benefits are partial; major faults and direct reclaim may remain high'\n            echo 'V8: source compiled for pinned RMX2170 A16, physical boot validation still required'
+            echo 'User evidence 17:21 to 17:51 at 86% is stable displayed charge, not a precise 0 mAh measurement'
+            echo 'Official KernelSU Next UAPI 6 retained; Root runtime not tested in this lab'
+            echo 'No new boot.img or ZIP created'
+            echo 'Device boot and root tests not done'
+          } | tee audit/v8-hyperspeed-build-report.txt
+
+      - name: Publish diagnostic outputs only
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: A16-V8-HYPERSPEED-KSU-NEXT-IMAGE-NONFLASHABLE
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            audit/compiler.txt
+            audit/patch-stat.txt
+            audit/v3-api6-core-probe.txt
+            audit/susfs-4.14-atoll.patch
+            audit/boot-dtb-compatibility.txt
+            audit/config-api6-susfs-core.txt
+            audit/v7.4-idle-contract.sha256
+            scripts/v7/ay_v74_reclaim_probe.sh
+            audit/v7-deepdoze-600s-build-report.txt
+            kernel/out/arch/arm64/boot/Image.gz
+            kernel/out/arch/arm64/boot/dts/**/*.dtb
