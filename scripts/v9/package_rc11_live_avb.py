@@ -58,25 +58,39 @@ def patch_script(raw):
     assert 'check_partition_hash "$VBMETA_SYSTEM"' in script
     return script.replace("V9 RC1", "V9 RC1.1").encode()
 
-README = """V9 RC1.1 - EXACT LIVE AVB BINDING / RMX2170 / Evolution X A16
-EXPERIMENTAL - NOT TESTED ON PHYSICAL PHONE. Boot image may fail to start.
-This test ZIP requires exact V8 Boot, vbmeta, vbmeta_system and dtbo SHA256.
-Only Boot partition is written; rollback image is included in installer.
-Do not use original RC1 packages. Keep independent OrangeFox V8 backup.
-Top-level AVB flags=0x3 and chained vbmeta_system flags=0x0.
-Source dumps have valid RSA-4096/SHA256 signatures; this does not
-prove that bootloader will accept the changed V9 kernel.
-Android reported locked/green; actual bootloader state is unverified.
-No disabling AVB, no bypass, no vbmeta/dtbo/system/vendor/data writes.
-If any installer guard rejects the device, do not force the flash.
+README = """Ahmed Super Kernal A16 V9 RC1.1 - live AVB-bound guarded OrangeFox test.
+DEVICE: Realme 7 Pro RMX2170. ROM: Evolution X A16 Nov 2, 2026.
+STATUS: EXPERIMENTAL - PHYSICAL BOOT NOT YET TESTED. NEVER FLASH ON ANOTHER DEVICE.
+The install ZIP requires exact known working V8 Boot, live vbmeta, live
+vbmeta_system and dtbo SHA-256 hashes before writing BOOT ONLY.
+New Boot is hash-checked before the write and on the partition after the write.
+The install ZIP includes an exact V8 Boot for automatic rollback on a detected
+post-write mismatch. The separate restore ZIP accepts only exact V9 or V8 Boot.
+External vbmeta, vbmeta_system, dtbo, recovery, system, vendor and data are NOT written.
+V8 current Boot SHA256: e18a70a5383de73ca8982231d3ce117600b17923b55d6360367a813d52ccb45d
+V9 candidate Boot SHA256: be6aee32892a2217be48287d5c1710ae1d5d67b86c69d6d623e10ac7a9efa653
+Live vbmeta SHA256: 9d927f1bf9f2e668132da825ad5556c1fe182844ef4714fff22fa7637a1b60a3
+Live vbmeta_system SHA256: d5cd209716d46085a07ff90178b89f2ef9387ee9374222ddc2830d269cae9305
+Live dtbo SHA256: 97e4041f2bd6541228a1c977fa5ba40d4c4b4dc3a482e588c3892480d16e097b
+
+IMPORTANT: Valid AVB metadata signatures do not establish that a different
+kernel image will boot. Android properties report bootloader 'locked'/'green',
+which could reflect ROM property spoofing; without bootloader confirmation
+there is residual boot risk. No assertion of boot success or AVB compatibility.
+Keep an independent V8 Boot backup outside the phone and a working recovery.
+Do not use the old V9 RC1 ZIPs. No format, wipe, vbmeta/verity flags changes.
+If unexpected state is reported by the installer, STOP; do not bypass guards.
+Project: https://github.com/ahmedyasir2023/Ahmed-Super-Kernal-A16/pull/18
 """
 
-REPORT = """V9 RC1.1 offline repack: live vbmeta SHA-256 rebinding ONLY.
-Source CI kernel: run 42081736260; V8/V9 kernel image payloads unchanged.
-Input live vbmeta/vbmeta_system are 64 KiB each, hashes match pinned values.
-Installer checks exact V8 Boot, live vbmeta, live vbmeta_system and dtbo.
-Only Boot is writable, verified after writing; rollback restores exact V8.
-Offline checks are not proof of physical boot, root, fingerprint or DT2W.
+REPORT = """V9 RC1.1 PACKAGING: exact live AVB hash rebinding only.
+Live vbmeta and vbmeta_system full dumps verified by SHA256, 64KiB, AVB0 headers, AVB flags.
+RSA-4096/SHA256 signatures independently verified in offline preflight.
+Boot V8 and V9 payload bytes unmodified; V8/V9 SHA256 pinned.
+All non-updater ZIP binaries byte-for-byte identical to RC1.
+No AVB partitions are modified by these ZIPs.
+CI kernel build: 42081736260 (PASS); physical boot: NOT TESTED.
+Previous failure due to stale hardcoded vbmeta hashes; this release binds the exact dumps.
 """
 
 def repack(src, out, restore):
