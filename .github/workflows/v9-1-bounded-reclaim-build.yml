@@ -3,6 +3,8 @@ name: V9.2 Power & Suspend Intelligence ARM64 Build
 on:
   push:
     branches: [v9-1-bounded-reclaim-latency, v9-2-power-suspend-intelligence]
+  pull_request:
+    branches: [v9-1-bounded-reclaim-latency]
   workflow_dispatch:
 
 permissions:
@@ -33,7 +35,8 @@ jobs:
             bash -n "$script"
           done
           python3 -m py_compile scripts/v2/manual_hooks.py scripts/prepare_ksu_legacy.py scripts/port_susfs_patch.py scripts/verify_boot_dtb.py scripts/v3/patch_api6_susfs_logging.py scripts/v3/patch_api6_susfs_uname.py scripts/v3/patch_api6_susfs_appstate.py scripts/v3/patch_api6_susfs_path.py scripts/v3/validate_path_bridge.py scripts/v4/patch_dt2w_default.py scripts/v5/patch_ay_input_boost.py scripts/v5/validate_ay_input_boost.py scripts/v6/patch_screen_wake_boost.py scripts/v6/validate_screen_wake_boost.py scripts/v7/patch_deepdoze_600s.py scripts/v7/validate_deepdoze_600s.py scripts/v7/patch_v7_1_wake_race.py scripts/v7/validate_v7_1_wake_race.py scripts/v7/preflash_audit.py scripts/v7/patch_v7_1_1_panel_state.py scripts/v7/validate_v7_1_1_panel_state.py scripts/v7/patch_v7_2_zram_mmstat.py scripts/v7/validate_v7_2_zram_mmstat.py scripts/v7/patch_v7_2_boost_lock.py scripts/v7/validate_v7_2_boost_lock.py scripts/v7/patch_v7_3_kswapd_hotplug.py scripts/v7/validate_v7_3_kswapd_hotplug.py scripts/v7/validate_v7_3_idlesafe.py scripts/v7/patch_v7_4_zram_dedup_account.py scripts/v7/validate_v7_4_zram_dedup_account.py scripts/v7/patch_v7_5_reclaim_progress.py scripts/v7/validate_v7_5_reclaim_progress.py scripts/v7/patch_v7_6_reclaim_observability.py scripts/v7/validate_v7_6_reclaim_observability.py scripts/v7/patch_v7_7_reclaim_ab_guarded.py scripts/v7/validate_v7_7_reclaim_ab_guarded.py scripts/v8/patch_v8_hyperspeed.py scripts/v8/validate_v8_hyperspeed.py scripts/v8/patch_v8_1_ultrasmooth.py scripts/v8/validate_v8_1_ultrasmooth.py scripts/v9/patch_v9_foreground_smooth.py scripts/v9/validate_v9_foreground_smooth.py scripts/v9/patch_v9_1_bounded_reclaim.py scripts/v9/validate_v9_1_bounded_reclaim.py scripts/v9/patch_v9_2_power_suspend_telemetry.py scripts/v9/validate_v9_2_power_suspend_telemetry.py
-          sh -n scripts/v7/ay_v74_reclaim_probe.sh scripts/v9/ay_v92_power_suspend_probe.sh
+          sh -n scripts/v7/ay_v74_reclaim_probe.sh
+          sh -n scripts/v9/ay_v92_power_suspend_probe.sh
           echo 'Bash and Python source syntax checks passed'
           python3 scripts/v7/preflash_audit.py --self-test
 
