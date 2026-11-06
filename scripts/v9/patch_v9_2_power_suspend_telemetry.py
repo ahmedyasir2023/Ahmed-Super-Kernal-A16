@@ -164,13 +164,13 @@ one(
 \t/* Observe system PM transitions without changing their outcome. */
 \tret = register_pm_notifier(&ay_pm_suspend_nb);
 \tif (ret)
-\t\tpr_warn("V9.2 PM suspend telemetry registration failed: %d\\n",
+\t\tpr_warn("V9.2 PM suspend telemetry registration failed: %d\n",
 \t\t\tret);
 
 #ifdef CONFIG_PROC_FS
 \tif (!proc_create("ay_power_suspend_status", 0444, NULL,
 \t\t\t &ay_power_suspend_status_fops))
-\t\tpr_warn("V9.2 read-only suspend status endpoint unavailable\\n");
+\t\tpr_warn("V9.2 read-only suspend status endpoint unavailable\n");
 #endif
 
 """,
