@@ -2,7 +2,7 @@ name: V9.2 Power & Suspend Intelligence ARM64 Build
 
 on:
   push:
-branches: [v9-1-bounded-reclaim-latency, v9-2-power-suspend-intelligence]
+    branches: [v9-1-bounded-reclaim-latency, v9-2-power-suspend-intelligence]
   pull_request:
     branches: [v9-1-bounded-reclaim-latency]
   workflow_dispatch:
@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 concurrency:
-group: v9-power-suspend-${{ github.ref }}
+  group: v9-power-suspend-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -414,6 +414,6 @@ jobs:
             audit/v9.2-cpu-boost-source.sha256
             scripts/v7/ay_v74_reclaim_probe.sh
             scripts/v9/ay_v92_power_suspend_probe.sh
-            audit/v9-1-bounded-reclaim-build-report.txt
+            audit/v9-2-power-suspend-build-report.txt
             kernel/out/arch/arm64/boot/Image.gz
             kernel/out/arch/arm64/boot/dts/**/*.dtb
