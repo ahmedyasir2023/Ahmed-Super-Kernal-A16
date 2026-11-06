@@ -55,7 +55,7 @@ for forbidden in (
 
 # No active polling loop may be added to the DeepDoze expiry callback.
 start = cpu.index("static void ay_deepdoze_expire(")
-end = cpu.index("\\n}\\n", start)
+end = cpu.index("\n}\n", start)
 expire_body = cpu[start:end]
 assert "while (1)" not in expire_body
 assert "for (;;)" not in expire_body
