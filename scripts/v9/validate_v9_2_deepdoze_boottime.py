@@ -37,8 +37,9 @@ assert cpu.count(
 assert "msecs_to_jiffies(600000)" in cpu
 assert "mod_delayed_work(cpu_boost_wq, &ay_deepdoze_timer," in cpu
 
-# No new active wake source or polling loop may be introduced by the RC2 patch.
-patch = (root / "scripts/v9/patch_v9_2_deepdoze_boottime.py").read_text()
+# Validate the generated kernel C source, not the Python patcher's own
+# assertion strings. The old check searched the patch script text and therefore
+# matched its own forbidden-token list (a false positive).
 for forbidden in (
     "schedule_delayed_work(&ay_deepdoze_timer",
     "pm_stay_awake(",
@@ -47,10 +48,17 @@ for forbidden in (
     "alarm_start(",
     "alarm_start_relative(",
     "schedule_timeout(",
-    "while (1)",
-    "for (;;)",
 ):
-    assert forbidden not in patch, f"Forbidden DeepDoze wake/polling behavior: {forbidden}"
+    assert forbidden not in cpu, (
+        f"Forbidden DeepDoze wake source in generated CPUBoost C: {forbidden}"
+    )
+
+# No active polling loop may be added to the DeepDoze expiry callback.
+start = cpu.index("static void ay_deepdoze_expire(")
+end = cpu.index("\\n}\\n", start)
+expire_body = cpu[start:end]
+assert "while (1)" not in expire_body
+assert "for (;;)" not in expire_body
 
 # Pure timebase model: suspend time counts toward 600s, but never causes an
 # early cap. A deferrable callback only schedules remaining time when it runs.
