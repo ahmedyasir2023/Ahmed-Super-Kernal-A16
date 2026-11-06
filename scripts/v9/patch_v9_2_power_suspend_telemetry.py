@@ -181,8 +181,8 @@ one(
 
 assert s.count("register_pm_notifier(&ay_pm_suspend_nb)") == 1
 assert s.count('proc_create("ay_power_suspend_status", 0444') == 1
-assert s.count("PM_SUSPEND_PREPARE") == 1
-assert s.count("PM_POST_SUSPEND") == 2
+assert s.count("case PM_SUSPEND_PREPARE:") == 1
+assert s.count("case PM_POST_SUSPEND:") == 1
 assert "mod_delayed_work" not in telemetry
 assert "queue_work" not in telemetry
 assert "pm_stay_awake" not in telemetry
