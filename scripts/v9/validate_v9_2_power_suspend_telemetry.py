@@ -34,6 +34,8 @@ for token in (
     "pm_total_prepare_to_post_boottime_ms=",
     "elapsed_semantics=PM_SUSPEND_PREPARE_to_PM_POST_SUSPEND_CLOCK_BOOTTIME",
     "suspend_success_semantics=use_kernel_suspend_stats_not_this_notifier",
+    r'pr_warn("V9.2 PM suspend telemetry registration failed: %d\\n",',
+    r'pr_warn("V9.2 read-only suspend status endpoint unavailable\\n");',
 ):
     assert token in cpu, f"Missing V9.2 source contract: {token}"
 
