@@ -158,23 +158,21 @@ one(
 )
 
 one(
-    "\tcpufreq_register_notifier(&boost_adjust_nb, CPUFREQ_POLICY_NOTIFIER);\n\n"
-    "\tret = input_register_handler(&cpuboost_input_handler);\n",
+    "\tcpufreq_register_notifier(&boost_adjust_nb, CPUFREQ_POLICY_NOTIFIER);\n",
     """\tcpufreq_register_notifier(&boost_adjust_nb, CPUFREQ_POLICY_NOTIFIER);
 
-	/* Observe system PM transitions without changing their outcome. */
-	ret = register_pm_notifier(&ay_pm_suspend_nb);
-	if (ret)
-		pr_warn("V9.2 PM suspend telemetry registration failed: %d\\n",
-			ret);
+\t/* Observe system PM transitions without changing their outcome. */
+\tret = register_pm_notifier(&ay_pm_suspend_nb);
+\tif (ret)
+\t\tpr_warn("V9.2 PM suspend telemetry registration failed: %d\\n",
+\t\t\tret);
 
 #ifdef CONFIG_PROC_FS
-	if (!proc_create("ay_power_suspend_status", 0444, NULL,
-			 &ay_power_suspend_status_fops))
-		pr_warn("V9.2 read-only suspend status endpoint unavailable\\n");
+\tif (!proc_create("ay_power_suspend_status", 0444, NULL,
+\t\t\t &ay_power_suspend_status_fops))
+\t\tpr_warn("V9.2 read-only suspend status endpoint unavailable\\n");
 #endif
 
-	ret = input_register_handler(&cpuboost_input_handler);
 """,
     "register observer and expose read-only /proc endpoint",
 )
