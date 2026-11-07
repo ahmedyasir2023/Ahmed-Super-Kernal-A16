@@ -97,15 +97,6 @@ one(
     "boost worker deadline and lock locals",
 )
 
-one(
-    "    duration = wake ? min_t(unsigned int, READ_ONCE(ay_wake_boost_ms), 180)\n"
-    "                    : nav ? min_t(unsigned int, READ_ONCE(ay_nav_boost_ms), 160)\n"
-    "                          : min_t(unsigned int, READ_ONCE(input_boost_ms), 140);\n\n"
-    "\t cancel_delayed_work_sync(&input_boost_rem);",
-    "UNMATCHED",
-    "unused formatting sentinel",
-) if False else None
-
 # Exact V9.2 source has a tab before cancel_delayed_work_sync.
 old_duration = (
     "    duration = wake ? min_t(unsigned int, READ_ONCE(ay_wake_boost_ms), 180)\n"
