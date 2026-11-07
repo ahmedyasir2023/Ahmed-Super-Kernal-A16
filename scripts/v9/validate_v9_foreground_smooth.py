@@ -47,13 +47,25 @@ for token in ("static bool ay_v8_latency_watermarks = true;", "watermark_scale_f
 # The reused path must be after synchronous expiry cancellation and the
 # second panel-state check, and before the expensive per-policy work.
 fn = src[src.index("static void do_input_boost(struct work_struct *work)"):]
-points = (
-    fn.index("cancel_delayed_work_sync(&input_boost_rem);"),
-    fn.index("if (!READ_ONCE(ay_screen_on))", fn.index("cancel_delayed_work_sync(&input_boost_rem);")),
-    fn.index("READ_ONCE(ay_v9_boost_profile) == (nav ? 2 : 1)"),
-    fn.index("update_policy_online();"),
-    fn.index("WRITE_ONCE(ay_v9_boost_profile, wake ? 3 : (nav ? 2 : 1));"),
-)
+if "static bool ay_v10_boost_fastpath = true;" in src:
+    # V10.1 intentionally moves the same-profile check before synchronous
+    # cancellation. The expiry worker and this fast path share one spinlock.
+    points = (
+        fn.index("if (!wake && READ_ONCE(ay_v10_boost_fastpath)"),
+        fn.index("cancel_delayed_work_sync(&input_boost_rem);"),
+        fn.index("if (!READ_ONCE(ay_screen_on))", fn.index("cancel_delayed_work_sync(&input_boost_rem);")),
+        fn.index("update_policy_online();"),
+        fn.index("WRITE_ONCE(ay_v9_boost_profile, wake ? 3 : (nav ? 2 : 1));"),
+    )
+else:
+    # Original V9 ordering before the V10 fast path.
+    points = (
+        fn.index("cancel_delayed_work_sync(&input_boost_rem);"),
+        fn.index("if (!READ_ONCE(ay_screen_on))", fn.index("cancel_delayed_work_sync(&input_boost_rem);")),
+        fn.index("READ_ONCE(ay_v9_boost_profile) == (nav ? 2 : 1)"),
+        fn.index("update_policy_online();"),
+        fn.index("WRITE_ONCE(ay_v9_boost_profile, wake ? 3 : (nav ? 2 : 1));"),
+    )
 assert list(points) == sorted(points)
 assert src.count("WRITE_ONCE(ay_v9_boost_profile, 0);") == 1
 assert src.count("WRITE_ONCE(ay_v9_boost_profile, wake ? 3 : (nav ? 2 : 1));") == 1
