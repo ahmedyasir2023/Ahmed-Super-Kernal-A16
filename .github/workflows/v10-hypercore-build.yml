@@ -1,15 +1,15 @@
 name: V10 AY HyperCore ARM64 Build
 
 on:
-  pull_request:
-    branches: [v9-2-power-suspend-intelligence]
+  push:
+    branches: [v10-ay-hypercore]
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: v10-ay-hypercore-${{ github.head_ref || github.ref }}
+  group: v10-ay-hypercore-${{ github.ref_name }}
   cancel-in-progress: true
 
 jobs:
@@ -372,7 +372,7 @@ jobs:
           fi
           cp kernel/out/.config audit/config-api6-susfs-core.txt
           {
-            echo 'V10 AY HYPERCORE — V9.2 BASE + V10.1 BOOST FASTPATH — SOURCE-ONLY'
+            echo 'V10 AY HYPERCORE — V9.2 BASE + V10.1 BOOST FASTPATH + V10.2 POLICY DEDUP — SOURCE-ONLY'
             echo "Android clang: $(head -n 1 audit/compiler.txt)"
             echo "Kernel SHA: $(git -C kernel rev-parse HEAD)"
             echo "KernelSU SHA: $(git -C KernelSU-Next rev-parse HEAD)"
@@ -380,7 +380,7 @@ jobs:
             echo "Image.gz SHA-256: $(sha256sum kernel/out/arch/arm64/boot/Image.gz)"
             echo 'SUSFS API6 path+uname+logging; feature mask 0x301; mount/kstat hiding NOT enabled'
             echo 'Touch driver default DouTap_enable=1; original probe gesture=1'
-            echo 'AY adaptive input 72%, 105ms cap 140ms; wake 82%, 155ms cap 180ms'
+            echo 'V10 boost defaults: touch 78%/115ms (140ms cap); navigation 82%/145ms (160ms cap); wake 85%/170ms (180ms cap); 100ms input debounce'
             echo 'Panel blank: release input/WALT; one-shot deferrable 600s timer then cap CPU policy max to allowed min'
             echo 'No max frequency pins, thermal/SELinux/DTB bypass or active polling'
             echo 'On unblank: cancel timer and remove CPU cap before InstantWake; runtime DT2W/app speed NOT yet verified'
