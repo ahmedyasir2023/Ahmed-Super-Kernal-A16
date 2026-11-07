@@ -73,22 +73,50 @@ jobs:
           grep -q '21.0.0' audit/compiler.txt
           echo "CLANG_BIN=$CLANG_BIN" >> "$GITHUB_ENV"
 
-      - name: Checkout original ROM kernel and official KernelSU Next Legacy
+      - name: Fetch pinned kernel and root sources with bounded shallow history
         run: |
           set -euo pipefail
-          git clone --filter=blob:none --no-checkout https://github.com/realme-atoll/android_kernel_realme_sm7125.git kernel
-          git -C kernel checkout "$KERNEL_SHA"
-          test "$(git -C kernel rev-parse HEAD)" = "$KERNEL_SHA"
-          git clone --filter=blob:none --no-checkout https://github.com/KernelSU-Next/KernelSU-Next.git KernelSU-Next
-          git -C KernelSU-Next checkout "$KSU_SHA"
-          test "$(git -C KernelSU-Next rev-parse HEAD)" = "$KSU_SHA"
+          export GIT_TERMINAL_PROMPT=0
+
+          fetch_pinned() {
+            local dir="$1"
+            local url="$2"
+            local sha="$3"
+            local fallback_ref="$4"
+            local fetched=0
+            mkdir -p "$dir"
+            git -C "$dir" init
+            git -C "$dir" remote add origin "$url"
+
+            for attempt in 1 2; do
+              echo "Fetching $dir at pinned commit $sha (attempt $attempt)"
+              if timeout 15m git -C "$dir" -c protocol.version=2 -c http.lowSpeedLimit=1000 -c http.lowSpeedTime=60 fetch --progress --depth=1 --filter=blob:none --no-tags origin "$sha"; then
+                fetched=1
+                break
+              fi
+              sleep 5
+            done
+
+            if [ "$fetched" -ne 1 ]; then
+              echo "Direct SHA fetch unavailable; using bounded branch history: $fallback_ref"
+              timeout 15m git -C "$dir" -c protocol.version=2 fetch --progress --depth=1 --filter=blob:none --no-tags origin "$fallback_ref"
+              if ! git -C "$dir" cat-file -e "$sha^{commit}" 2>/dev/null; then
+                timeout 15m git -C "$dir" -c protocol.version=2 fetch --progress --deepen=200 --filter=blob:none --no-tags origin "$fallback_ref"
+              fi
+            fi
+
+            git -C "$dir" checkout --detach "$sha"
+            test "$(git -C "$dir" rev-parse HEAD)" = "$sha"
+            test -z "$(git -C "$dir" status --porcelain)"
+          }
+
+          fetch_pinned kernel https://github.com/realme-atoll/android_kernel_realme_sm7125.git "$KERNEL_SHA" refs/heads/aosp-16
+          fetch_pinned KernelSU-Next https://github.com/KernelSU-Next/KernelSU-Next.git "$KSU_SHA" refs/heads/legacy
+          fetch_pinned susfs4ksu https://github.com/kutemeikito/susfs4ksu.git "$SUSFS_SHA" refs/heads/kernel-4.14
+
           test -f kernel/arch/arm64/configs/atoll_defconfig
           test -f KernelSU-Next/kernel/Kbuild
           grep -qx 'SUBLEVEL = 336' kernel/Makefile
-          test -z "$(git -C kernel status --porcelain)"
-          git clone --filter=blob:none --no-checkout https://github.com/kutemeikito/susfs4ksu.git susfs4ksu
-          git -C susfs4ksu checkout "$SUSFS_SHA"
-          test "$(git -C susfs4ksu rev-parse HEAD)" = "$SUSFS_SHA"
 
       - name: Stage SUSFS core and exact verified API6 root hooks
         run: bash scripts/v3/stage_api6_susfs_core.sh
