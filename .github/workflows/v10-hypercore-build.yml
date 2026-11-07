@@ -1,8 +1,6 @@
 name: V10 AY HyperCore ARM64 Build
 
 on:
-  push:
-    branches: [v10-ay-hypercore]
   pull_request:
     branches: [v9-2-power-suspend-intelligence]
   workflow_dispatch:
@@ -11,7 +9,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: v10-ay-hypercore-${{ github.ref }}
+  group: v10-ay-hypercore-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -34,7 +32,7 @@ jobs:
           for script in scripts/v2/integrate_root.sh scripts/v3/stage_api6_susfs_core.sh scripts/v3/build_api6_susfs_core.sh; do
             bash -n "$script"
           done
-          python3 -m py_compile scripts/v2/manual_hooks.py scripts/prepare_ksu_legacy.py scripts/port_susfs_patch.py scripts/verify_boot_dtb.py scripts/v3/patch_api6_susfs_logging.py scripts/v3/patch_api6_susfs_uname.py scripts/v3/patch_api6_susfs_appstate.py scripts/v3/patch_api6_susfs_path.py scripts/v3/validate_path_bridge.py scripts/v4/patch_dt2w_default.py scripts/v5/patch_ay_input_boost.py scripts/v5/validate_ay_input_boost.py scripts/v6/patch_screen_wake_boost.py scripts/v6/validate_screen_wake_boost.py scripts/v7/patch_deepdoze_600s.py scripts/v7/validate_deepdoze_600s.py scripts/v7/patch_v7_1_wake_race.py scripts/v7/validate_v7_1_wake_race.py scripts/v7/preflash_audit.py scripts/v7/patch_v7_1_1_panel_state.py scripts/v7/validate_v7_1_1_panel_state.py scripts/v7/patch_v7_2_zram_mmstat.py scripts/v7/validate_v7_2_zram_mmstat.py scripts/v7/patch_v7_2_boost_lock.py scripts/v7/validate_v7_2_boost_lock.py scripts/v7/patch_v7_3_kswapd_hotplug.py scripts/v7/validate_v7_3_kswapd_hotplug.py scripts/v7/validate_v7_3_idlesafe.py scripts/v7/patch_v7_4_zram_dedup_account.py scripts/v7/validate_v7_4_zram_dedup_account.py scripts/v7/patch_v7_5_reclaim_progress.py scripts/v7/validate_v7_5_reclaim_progress.py scripts/v7/patch_v7_6_reclaim_observability.py scripts/v7/validate_v7_6_reclaim_observability.py scripts/v7/patch_v7_7_reclaim_ab_guarded.py scripts/v7/validate_v7_7_reclaim_ab_guarded.py scripts/v8/patch_v8_hyperspeed.py scripts/v8/validate_v8_hyperspeed.py scripts/v8/patch_v8_1_ultrasmooth.py scripts/v8/validate_v8_1_ultrasmooth.py scripts/v9/patch_v9_foreground_smooth.py scripts/v9/validate_v9_foreground_smooth.py scripts/v9/patch_v9_1_bounded_reclaim.py scripts/v9/validate_v9_1_bounded_reclaim.py scripts/v9/patch_v9_2_power_suspend_telemetry.py scripts/v9/validate_v9_2_power_suspend_telemetry.py scripts/v9/patch_v9_2_deepdoze_boottime.py scripts/v9/validate_v9_2_deepdoze_boottime.py scripts/v10/patch_v10_boost_fastpath.py scripts/v10/validate_v10_boost_fastpath.py
+          python3 -m py_compile scripts/v2/manual_hooks.py scripts/prepare_ksu_legacy.py scripts/port_susfs_patch.py scripts/verify_boot_dtb.py scripts/v3/patch_api6_susfs_logging.py scripts/v3/patch_api6_susfs_uname.py scripts/v3/patch_api6_susfs_appstate.py scripts/v3/patch_api6_susfs_path.py scripts/v3/validate_path_bridge.py scripts/v4/patch_dt2w_default.py scripts/v5/patch_ay_input_boost.py scripts/v5/validate_ay_input_boost.py scripts/v6/patch_screen_wake_boost.py scripts/v6/validate_screen_wake_boost.py scripts/v7/patch_deepdoze_600s.py scripts/v7/validate_deepdoze_600s.py scripts/v7/patch_v7_1_wake_race.py scripts/v7/validate_v7_1_wake_race.py scripts/v7/preflash_audit.py scripts/v7/patch_v7_1_1_panel_state.py scripts/v7/validate_v7_1_1_panel_state.py scripts/v7/patch_v7_2_zram_mmstat.py scripts/v7/validate_v7_2_zram_mmstat.py scripts/v7/patch_v7_2_boost_lock.py scripts/v7/validate_v7_2_boost_lock.py scripts/v7/patch_v7_3_kswapd_hotplug.py scripts/v7/validate_v7_3_kswapd_hotplug.py scripts/v7/validate_v7_3_idlesafe.py scripts/v7/patch_v7_4_zram_dedup_account.py scripts/v7/validate_v7_4_zram_dedup_account.py scripts/v7/patch_v7_5_reclaim_progress.py scripts/v7/validate_v7_5_reclaim_progress.py scripts/v7/patch_v7_6_reclaim_observability.py scripts/v7/validate_v7_6_reclaim_observability.py scripts/v7/patch_v7_7_reclaim_ab_guarded.py scripts/v7/validate_v7_7_reclaim_ab_guarded.py scripts/v8/patch_v8_hyperspeed.py scripts/v8/validate_v8_hyperspeed.py scripts/v8/patch_v8_1_ultrasmooth.py scripts/v8/validate_v8_1_ultrasmooth.py scripts/v9/patch_v9_foreground_smooth.py scripts/v9/validate_v9_foreground_smooth.py scripts/v9/patch_v9_1_bounded_reclaim.py scripts/v9/validate_v9_1_bounded_reclaim.py scripts/v9/patch_v9_2_power_suspend_telemetry.py scripts/v9/validate_v9_2_power_suspend_telemetry.py scripts/v9/patch_v9_2_deepdoze_boottime.py scripts/v9/validate_v9_2_deepdoze_boottime.py scripts/v10/patch_v10_boost_fastpath.py scripts/v10/validate_v10_boost_fastpath.py scripts/v10/patch_v10_policy_dedup.py scripts/v10/validate_v10_policy_dedup.py
           sh -n scripts/v7/ay_v74_reclaim_probe.sh
           sh -n scripts/v9/ay_v92_power_suspend_probe.sh
           echo 'Bash and Python source syntax checks passed'
@@ -298,6 +296,21 @@ jobs:
           python3 scripts/v7/validate_v7_1_1_panel_state.py
           git -C kernel -c core.whitespace=-blank-at-eol diff --check
 
+      - name: V10.2 deduplicate shared CPUFreq policy refreshes
+        run: |
+          set -euo pipefail
+          python3 scripts/v10/patch_v10_policy_dedup.py
+          python3 scripts/v10/validate_v10_policy_dedup.py
+          python3 scripts/v10/validate_v10_boost_fastpath.py
+          python3 scripts/v9/validate_v9_foreground_smooth.py
+          python3 scripts/v9/validate_v9_2_deepdoze_boottime.py
+          python3 scripts/v9/validate_v9_2_power_suspend_telemetry.py
+          python3 scripts/v9/validate_v9_1_bounded_reclaim.py
+          python3 scripts/v8/validate_v8_1_ultrasmooth.py
+          python3 scripts/v7/validate_v7_1_wake_race.py
+          python3 scripts/v7/validate_v7_1_1_panel_state.py
+          git -C kernel -c core.whitespace=-blank-at-eol diff --check
+
       - name: Verify fail-closed API6 path-only source and permission contract
         run: python3 scripts/v3/validate_path_bridge.py
       - name: Compile ARM64 with official Root and isolated SUSFS path VFS hooks
@@ -340,6 +353,7 @@ jobs:
           python3 scripts/v7/validate_v7_4_zram_dedup_account.py
           python3 scripts/v9/validate_v9_1_bounded_reclaim.py
           python3 scripts/v10/validate_v10_boost_fastpath.py
+          python3 scripts/v10/validate_v10_policy_dedup.py
           python3 scripts/v8/validate_v8_1_ultrasmooth.py
           grep -q '^CONFIG_PROC_FS=y$' kernel/out/.config
           grep -q '^CONFIG_PM_SLEEP=y$' kernel/out/.config
@@ -414,6 +428,8 @@ jobs:
             echo 'V10.1: same-profile input boost renewal runs before sync cancellation; lock-protected expiry prevents stale early clear'
             echo 'V10.1: no new workqueue, timer, wake lock, governor, frequency ceiling, touch, thermal, SELinux or DTB change'
             echo 'V10.1: hardware latency and battery effects remain unmeasured; no speedup claim'
+            echo 'V10.2: refresh each shared CPUFreq policy once; root-only ay_v10_policy_dedup opt-out restores vendor per-CPU loop'
+            echo 'V10.2: policy transaction reduction is source-derived; device latency/battery effect remains unmeasured'
             echo 'User evidence 17:21 to 17:51 at 86% is stable displayed charge, not a precise 0 mAh measurement'
             echo 'Official KernelSU Next UAPI 6 retained; Root runtime not tested in this lab'
             echo 'No new boot.img or ZIP created'

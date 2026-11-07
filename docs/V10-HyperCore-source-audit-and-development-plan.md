@@ -47,22 +47,28 @@ This is a source-level latency optimization hypothesis. It is not yet a measured
 - Validate race ordering, panel-off release, and existing thermal policy bounds.
 - Do not add Android ActivityManager claims: the kernel input driver does not directly know that an app launch has begun.
 
-### V10.2 — Memory latency and reclaim
+### V10.2 — Shared CPUFreq policy refresh (implemented in this branch)
+- Replace repeated per-online-CPU policy refreshes with one update per distinct `policy->cpu` leader.
+- Read the policy leader under `policy->rwsem`; retain `get_online_cpus()` across enumeration.
+- Keep the original per-online-CPU loop behind root-only `ay_v10_policy_dedup` opt-out.
+- The RMX2170's observed two-policy topology is expected to need two policy refreshes instead of eight when all eight CPUs are online. This is a source/topology expectation, not a measured latency result.
+
+### V10.3 — Memory latency and reclaim
 - Audit actual V8.1 single-kswapd and V9.1 bounded-reclaim interactions.
 - Preserve vendor freeze/stop, watermark, PSI, and memcg semantics.
 - Avoid changing the default reclaim policy until there is a concrete code-level reason; retain a root-only rollback switch for any experiment.
 - No arbitrary ZRAM size, swappiness, or watermark increases.
 
-### V10.3 — Scheduler and UI latency
+### V10.4 — Scheduler and UI latency
 - Inspect WALT/schedutil, CPU placement, policy transition costs, and input-to-frame path.
 - No performance governor lock, no out-of-range frequencies, no disabling thermal limits.
 
-### V10.4 — DeepDoze and suspend
+### V10.5 — DeepDoze and suspend
 - Keep the 600-second CLOCK_BOOTTIME deadline and deferrable timer.
 - Distinguish CPUFreq cap from actual suspend/CPUIdle residency.
 - Do not add wake locks or periodic polling.
 
-### V10.5 — Integration and release qualification
+### V10.6 — Integration and release qualification
 - Preserve KernelSU Next API6, SUSFS path/uname/logging, SELinux Enforcing, original DTB/vendor drivers, fingerprint, and DT2W.
 - Keep V8 and V9.1 recovery images untouched.
 - Build and static checks precede any new OrangeFox packaging.
