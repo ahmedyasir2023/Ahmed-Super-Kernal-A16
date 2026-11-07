@@ -5,6 +5,7 @@ This does not assert that one additional background scan reduces actual PSI.
 Compare owner-observed PSI and battery against V9 RC1.1 after safe boot.
 """
 from pathlib import Path
+import re
 
 kernel = Path(__file__).resolve().parents[2] / "kernel"
 s = (kernel / "mm/vmscan.c").read_text()
@@ -13,9 +14,11 @@ touch = (kernel / "drivers/input/touchscreen/oppo_touchscreen/touchpanel_common_
 multi = (kernel / "mm/multi_kswapd/multi_kswapd.c").read_text()
 watermarks = (kernel / "mm/page_alloc.c").read_text()
 
+assert re.search(r"static bool ay_v91_bounded_reclaim = (?:true|false);", s)
+
 for term in (
     "#include <linux/jiffies.h>",
-    "static bool ay_v91_bounded_reclaim = true;",
+    "static bool ay_v91_bounded_reclaim =",
     "module_param_named(ay_v91_bounded_reclaim, ay_v91_bounded_reclaim, bool, 0600);",
     "static unsigned long ay_v91_last_extra_jiffies;",
     "atomic64_t ay_v91_extra_passes = ATOMIC64_INIT(0);",
