@@ -8,6 +8,10 @@ on:
       - v10-4-schedutil-fast-up
       - v10-parallel-*
       - v10-final-*
+  pull_request:
+    branches:
+      - v10-parallel-integration
+      - v10-final-integration
   workflow_dispatch:
 
 permissions:
@@ -392,7 +396,8 @@ jobs:
             python3 "$dir/validate.py"
           }
 
-          case "$GITHUB_REF_NAME" in
+          TRACK_REF="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+          case "$TRACK_REF" in
             v10-parallel-integration)
               while IFS= read -r track; do
                 [ -n "$track" ] || continue
@@ -410,7 +415,7 @@ jobs:
               done < "$ROOT/INTEGRATION_ORDER.txt"
               ;;
             v10-parallel-*)
-              track="${GITHUB_REF_NAME#v10-parallel-}"
+              track="${TRACK_REF#v10-parallel-}"
               if [ "$track" = "integration" ]; then
                 echo "Integration branch handled by matrix mode"
                 exit 0
