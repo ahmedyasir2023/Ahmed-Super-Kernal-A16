@@ -17,3 +17,7 @@ This branch adds a reproducible source audit and a read-only on-device probe. It
 3. Screen-on releases the cap immediately; DT2W and fingerprint remain functional.
 4. No new wake source or polling loop.
 5. Final power claim requires matched screen-off current and charge-loss measurements.
+
+
+## CI execution
+This pull request is configured to run the track validator and the pinned ARM64 source build. No intermediate image is intended for device flashing.
