@@ -413,6 +413,7 @@ jobs:
           python3 scripts/v10/validate_v10_boost_fastpath.py
           python3 scripts/v10/validate_v10_policy_dedup.py
           python3 scripts/v10/validate_v10_3_memory_efficiency.py
+          python3 scripts/v10/validate_v10_4_schedutil_fast_up.py
           python3 scripts/v8/validate_v8_1_ultrasmooth.py
           grep -q '^CONFIG_PROC_FS=y$' kernel/out/.config
           grep -q '^CONFIG_PM_SLEEP=y$' kernel/out/.config
