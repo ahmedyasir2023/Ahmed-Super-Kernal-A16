@@ -17,3 +17,7 @@ Adds a source contract for the already staged conservative baseline and a read-o
 3. ZRAM counters reconcile with block and memory accounting.
 4. No OOM increase, memory PSI regression or app-reload regression.
 5. Compare the same app workload and observation window before/after.
+
+
+## CI execution
+This pull request is configured to run the track validator and the pinned ARM64 source build. No intermediate image is intended for device flashing.
