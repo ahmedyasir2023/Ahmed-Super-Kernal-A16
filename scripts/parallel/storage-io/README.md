@@ -16,3 +16,7 @@ Adds source checks and a read-only storage probe. No queue scheduler or F2FS tun
 2. No increase in write amplification or idle write activity.
 3. p95/p99 random-read and fsync latency improve or remain neutral.
 4. No change to partition layout, encryption or mount flags.
+
+
+## CI execution
+This pull request is configured to run the track validator and the pinned ARM64 source build. No intermediate image is intended for device flashing.
