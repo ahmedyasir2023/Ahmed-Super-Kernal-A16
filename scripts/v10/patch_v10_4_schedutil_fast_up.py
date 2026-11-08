@@ -13,7 +13,7 @@ timer/work item, or alters screen-off/DeepDoze behavior.
 from pathlib import Path
 
 root = Path(__file__).resolve().parents[2]
-source = root / "kernel/sched/cpufreq_schedutil.c"
+source = root / "kernel/kernel/sched/cpufreq_schedutil.c"
 s = source.read_text()
 
 
