@@ -43,7 +43,7 @@ one(
     "static bool ay_v10_4_schedutil_fast_up = true;\n"
     "module_param_named(ay_v10_4_schedutil_fast_up, ay_v10_4_schedutil_fast_up, bool, 0600);\n"
     "MODULE_PARM_DESC(ay_v10_4_schedutil_fast_up,\n"
-    "\t\t "1: cap upward schedutil delay at 250us; 0: vendor rate limits");\n",
+    "\t\t \"1: cap upward schedutil delay at 250us; 0: vendor rate limits\");\n",
     "root-only V10.4 fast-up parameter",
 )
 
