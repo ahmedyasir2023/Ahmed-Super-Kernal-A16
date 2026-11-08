@@ -53,11 +53,14 @@ This is a source-level latency optimization hypothesis. It is not yet a measured
 - Keep the original per-online-CPU loop behind root-only `ay_v10_policy_dedup` opt-out.
 - The RMX2170's observed two-policy topology is expected to need two policy refreshes instead of eight when all eight CPUs are online. This is a source/topology expectation, not a measured latency result.
 
-### V10.3 — Memory latency and reclaim
-- Audit actual V8.1 single-kswapd and V9.1 bounded-reclaim interactions.
-- Preserve vendor freeze/stop, watermark, PSI, and memcg semantics.
-- Avoid changing the default reclaim policy until there is a concrete code-level reason; retain a root-only rollback switch for any experiment.
-- No arbitrary ZRAM size, swappiness, or watermark increases.
+### V10.3 — Memory Engine: conservative reclaim default (implemented in this branch)
+- Keep the V9.1 bounded extra-pass implementation intact, but change `ay_v91_bounded_reclaim` from boot-default ON to boot-default OFF.
+- Restore the vendor waiter-zero exit as the normal path. A root-only `0600` runtime opt-in remains available at `/sys/module/vmscan/parameters/ay_v91_bounded_reclaim`.
+- The opt-in still requires positive reclaim progress, an unbalanced node, at most one extra pass per balance cycle, and a global >=1-second rate limit; freezer and kthread-stop exits remain unconditional.
+- Keep V7.7 `ay_reclaim_progress` OFF, V8.1 single-kswapd enabled, the V8 watermark cap at 50, and the existing LZ4 ZRAM configuration. Do not increase swappiness, ZRAM size, or watermarks.
+- Scope is deliberately limited to the default and parameter description in `mm/vmscan.c`; no CPUFreq, touch, DT2W, DeepDoze, thermal, SELinux, vendor driver, or DTB changes.
+- Rationale: prior V9/V9.1 device observations were not a matched A/B experiment. V9 reported MemAvailable 1.22 GiB and memory PSI full avg60 35.35%; V9.1 reported 1.35 GiB and avg60 14.27%, with OOM=0 in both reports, but workload and observation windows differed. These numbers do not establish a causal benefit or battery effect. Default-off is a conservative way to stop unproven background reclaim work while retaining an explicit root opt-in.
+- No battery or UI improvement is claimed until matched measurements are available.
 
 ### V10.4 — Scheduler and UI latency
 - Inspect WALT/schedutil, CPU placement, policy transition costs, and input-to-frame path.
@@ -82,4 +85,4 @@ This is a source-level latency optimization hypothesis. It is not yet a measured
 - A V10 kernel artifact remains non-flashable until device-specific Boot/AVB inputs are verified.
 - No performance or battery improvement is claimed without matched on-device measurements.
 
-**Version status:** V10 development branch / V10.1 source experiment. Not a stable release and not authorized for flashing.
+**Version status:** V10.3 development branch / source experiment. CI compilation and source-contract checks are pending on this branch; physical boot, root/SUSFS runtime, fingerprint, DT2W, network, thermal, UI latency, and battery tests are not yet established. Not a stable release and not authorized for flashing.
