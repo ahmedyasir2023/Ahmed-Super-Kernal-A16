@@ -16,3 +16,7 @@ Adds a source contract for V10.1, V10.2 and V10.4 plus a read-only scheduler pro
 2. CPUFreq min/max and thermal ceilings remain authoritative.
 3. No busy polling or new high-priority worker.
 4. p50/p95/p99 input latency improves without idle power regression.
+
+
+## CI execution
+This pull request is configured to run the track validator and the pinned ARM64 source build. No intermediate image is intended for device flashing.
