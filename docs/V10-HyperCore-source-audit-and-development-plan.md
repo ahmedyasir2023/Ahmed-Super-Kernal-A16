@@ -75,12 +75,11 @@ This is a source-level latency optimization hypothesis. It is not yet a measured
 ### V10.5 — DeepDoze and suspend
 - Keep the 600-second CLOCK_BOOTTIME deadline and deferrable timer.
 - Distinguish CPUFreq cap from actual suspend/CPUIdle residency.
-- Do not add wake locks or periodic polling.
+- Use the existing read-only V9.2 PM probe as the first diagnostic; do not add wake locks or periodic polling.
+- Do not change suspend policy or mask wake sources until device evidence identifies a specific blocker and its owner.
+- Compare `suspend_stats`, wakeup-source deltas, CPUIdle residency deltas, PM notifier counts, CPUFreq state, and battery current over a controlled screen-off interval.
+- Only after that evidence, make the smallest targeted fix and add a source validator for its exact invariants.
 
-### V10.5 — DeepDoze and suspend
-- Keep the 600-second CLOCK_BOOTTIME deadline and deferrable timer.
-- Distinguish CPUFreq cap from actual suspend/CPUIdle residency.
-- Do not add wake locks or periodic polling.
 
 ### V10.6 — Integration and release qualification
 - Preserve KernelSU Next API6, SUSFS path/uname/logging, SELinux Enforcing, original DTB/vendor drivers, fingerprint, and DT2W.
@@ -96,4 +95,4 @@ This is a source-level latency optimization hypothesis. It is not yet a measured
 - A V10 kernel artifact remains non-flashable until device-specific Boot/AVB inputs are verified.
 - No performance or battery improvement is claimed without matched on-device measurements.
 
-**Version status:** V10.4 development branch / source experiment. V10.1–V10.3 source stages are inherited; V10.4 schedutil fast-up patch and validator are added in this branch. ARM64 CI compilation and source-contract checks are pending. Physical boot, root/SUSFS runtime, fingerprint, DT2W, network, thermal, UI latency, suspend residency, and battery tests are not established. Not a stable release and not authorized for flashing.
+**Version status:** V10.4 development branch / source experiment; CI compilation and source-contract checks passed. V10.1–V10.3 source stages are inherited; V10.4 schedutil fast-up patch and validator are added in this branch. ARM64 CI compilation and source-contract checks passed for the current V10.4 branch. Physical boot, root/SUSFS runtime, fingerprint, DT2W, network, thermal, UI latency, suspend residency, and battery tests are not established. Not a stable release and not authorized for flashing.
