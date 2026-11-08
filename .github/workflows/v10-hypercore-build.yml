@@ -578,5 +578,8 @@ jobs:
             audit/v10-hypercore-build-report.txt
             audit/parallel-feature-tracks.txt
             scripts/v10/*.py
+            scripts/parallel/**/*.py
+            scripts/parallel/**/*.sh
+            audit/parallel-*-source-audit.txt
             kernel/out/arch/arm64/boot/Image.gz
             kernel/out/arch/arm64/boot/dts/**/*.dtb
