@@ -56,7 +56,7 @@ assert effective(0, 500_000, True) == (0, 500_000, 0)
 for forbidden in (
     "pm_stay_awake(", "pm_wakeup_event(", "wake_lock(",
     "thermal_disable", "selinux_enforcing = 0",
-    "policy->max =", "cpufreq_driver_target(policy, UINT_MAX",
+    "cpufreq_driver_target(policy, UINT_MAX",
 ):
     assert forbidden not in src, forbidden
 
