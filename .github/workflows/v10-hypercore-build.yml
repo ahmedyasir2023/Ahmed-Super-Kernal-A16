@@ -2,7 +2,7 @@ name: V10 AY HyperCore ARM64 Build
 
 on:
   push:
-    branches: [v10-ay-hypercore, v10-3-ay-memory-engine]
+    branches: [v10-ay-hypercore, v10-3-ay-memory-engine, v10-4-schedutil-fast-up]
   workflow_dispatch:
 
 permissions:
