@@ -15,3 +15,7 @@ Adds source checks and a read-only network probe. No TCP congestion-control defa
 2. No packet loss, DNS delay or app-offline regression.
 3. No vendor WLAN/modem driver or firmware replacement.
 4. Screen-off radio wakeups are attributed before any suppression is considered.
+
+
+## CI execution
+This pull request is configured to run the track validator and the pinned ARM64 source build. No intermediate image is intended for device flashing.
