@@ -1,0 +1,10 @@
+power-suspend
+memory-engine
+scheduler-ui
+input-touch
+storage-io
+gpu-display
+thermal-efficiency
+network-stack
+root-security
+benchmark-release
