@@ -62,14 +62,24 @@ This is a source-level latency optimization hypothesis. It is not yet a measured
 - Rationale: prior V9/V9.1 device observations were not a matched A/B experiment. V9 reported MemAvailable 1.22 GiB and memory PSI full avg60 35.35%; V9.1 reported 1.35 GiB and avg60 14.27%, with OOM=0 in both reports, but workload and observation windows differed. These numbers do not establish a causal benefit or battery effect. Default-off is a conservative way to stop unproven background reclaim work while retaining an explicit root opt-in.
 - No battery or UI improvement is claimed until matched measurements are available.
 
-### V10.4 — Scheduler and UI latency
-- Inspect WALT/schedutil, CPU placement, policy transition costs, and input-to-frame path.
-- No performance governor lock, no out-of-range frequencies, no disabling thermal limits.
+### V10.4 — Bounded schedutil upward response (implemented in this branch)
+- Source audit confirmed the pinned Atoll defconfig enables WALT and schedutil. The pinned kernel implements schedutil in `kernel/sched/cpufreq_schedutil.c`; the source does not contain the previously assumed `drivers/cpufreq/cpufreq_schedutil.c` path.
+- Add root-only runtime switch `/sys/module/cpufreq_schedutil/parameters/ay_v10_4_schedutil_fast_up` (mode `0600`), default ON. If the active governor is not schedutil, this parameter has no effect.
+- Cap only the configured upward rate-limit delay at 250 microseconds. Existing lower values remain unchanged. The pre-calculation minimum-rate gate is made direction-aware so it does not continue enforcing the old, larger up delay before the upward transition check.
+- The down-rate delay is unchanged. Existing UIFirst `SCHED_CPUFREQ_BOOST` bypass remains unchanged. The feature never sets a frequency directly and never changes policy min/max, OPP tables, hispeed settings, WALT placement, scheduler boost values, or thermal limits.
+- Root rollback: write `0` to the parameter to restore the vendor schedutil up/down rate-limit behavior without reboot.
+- No timers, workqueues, wake locks, wake sources, or screen-off code are added. DeepDoze 600-second timing and screen-off cap are unchanged.
+- CI validator checks the 250us cap, dynamic minimum gate, unchanged down-rate delay, boost bypass, and a deterministic model across configured up/down delay combinations.
+- This is a bounded responsiveness hypothesis, not a measured device speedup. Runtime A/B and power measurements on RMX2170 are required before claiming improvement.
 
 ### V10.5 — DeepDoze and suspend
 - Keep the 600-second CLOCK_BOOTTIME deadline and deferrable timer.
 - Distinguish CPUFreq cap from actual suspend/CPUIdle residency.
-- Do not add wake locks or periodic polling.
+- Use the existing read-only V9.2 PM probe as the first diagnostic; do not add wake locks or periodic polling.
+- Do not change suspend policy or mask wake sources until device evidence identifies a specific blocker and its owner.
+- Compare `suspend_stats`, wakeup-source deltas, CPUIdle residency deltas, PM notifier counts, CPUFreq state, and battery current over a controlled screen-off interval.
+- Only after that evidence, make the smallest targeted fix and add a source validator for its exact invariants.
+
 
 ### V10.6 — Integration and release qualification
 - Preserve KernelSU Next API6, SUSFS path/uname/logging, SELinux Enforcing, original DTB/vendor drivers, fingerprint, and DT2W.
@@ -85,4 +95,4 @@ This is a source-level latency optimization hypothesis. It is not yet a measured
 - A V10 kernel artifact remains non-flashable until device-specific Boot/AVB inputs are verified.
 - No performance or battery improvement is claimed without matched on-device measurements.
 
-**Version status:** V10.3 development branch / source experiment. CI compilation and source-contract checks are pending on this branch; physical boot, root/SUSFS runtime, fingerprint, DT2W, network, thermal, UI latency, and battery tests are not yet established. Not a stable release and not authorized for flashing.
+**Version status:** V10.4 development branch / source experiment; CI compilation and source-contract checks passed. V10.1–V10.3 source stages are inherited; V10.4 schedutil fast-up patch and validator are added in this branch. ARM64 CI compilation and source-contract checks passed for the current V10.4 branch. Physical boot, root/SUSFS runtime, fingerprint, DT2W, network, thermal, UI latency, suspend residency, and battery tests are not established. Not a stable release and not authorized for flashing.
