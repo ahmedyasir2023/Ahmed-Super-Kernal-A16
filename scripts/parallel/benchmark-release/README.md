@@ -17,3 +17,7 @@ Adds release source contracts and a consolidated read-only device baseline scrip
 3. Image and configuration hashes are recorded.
 4. Boot, root, SUSFS, fingerprint, DT2W, connectivity, thermal and power gates are checked on the integrated candidate.
 5. No final release claim until device validation succeeds.
+
+
+## CI execution
+This pull request is configured to run the track validator and the pinned ARM64 source build. No intermediate image is intended for device flashing.
