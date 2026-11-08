@@ -432,7 +432,7 @@ jobs:
           fi
           cp kernel/out/.config audit/config-api6-susfs-core.txt
           {
-            echo 'V10 AY HYPERCORE — V9.2 BASE + V10.1 BOOST FASTPATH + V10.2 POLICY DEDUP + V10.3 MEMORY EFFICIENCY — SOURCE-ONLY'
+            echo 'V10 AY HYPERCORE — V9.2 BASE + V10.1 BOOST FASTPATH + V10.2 POLICY DEDUP + V10.3 MEMORY EFFICIENCY + V10.4 SCHEDUTIL FAST-UP — SOURCE-ONLY'
             echo "Android clang: $(head -n 1 audit/compiler.txt)"
             echo "Kernel SHA: $(git -C kernel rev-parse HEAD)"
             echo "KernelSU SHA: $(git -C KernelSU-Next rev-parse HEAD)"
@@ -492,6 +492,9 @@ jobs:
             echo 'V10.2: policy transaction reduction is source-derived; device latency/battery effect remains unmeasured'
             echo 'V10.3: V9.1 bounded background reclaim OFF by default; root-only ay_v91_bounded_reclaim opt-in retained'
             echo 'V10.3: vendor waiter-zero exit restored; no ZRAM, swappiness, watermark, kswapd-count, CPUFreq, touch or DeepDoze changes'
+            echo 'V10.4: schedutil upward rate-delay capped at 250us when root-only ay_v10_4_schedutil_fast_up=1; runtime opt-out restores vendor delays'
+            echo 'V10.4: downward rate delay, UIFirst boost bypass, CPUFreq policy limits, OPPs, WALT placement, thermal policy and DeepDoze unchanged'
+            echo 'V10.4: source and ARM64 CI passed; physical boot, schedutil runtime behavior, UI latency and battery impact NOT tested'
             echo 'User evidence 17:21 to 17:51 at 86% is stable displayed charge, not a precise 0 mAh measurement'
             echo 'Official KernelSU Next UAPI 6 retained; Root runtime not tested in this lab'
             echo 'No new boot.img or ZIP created'
