@@ -6,7 +6,7 @@ on:
       - v10-ay-hypercore
       - v10-3-ay-memory-engine
       - v10-4-schedutil-fast-up
-      - v10-parallel-*
+      - v10-parallel-integration
       - v10-final-*
   pull_request:
     branches:
