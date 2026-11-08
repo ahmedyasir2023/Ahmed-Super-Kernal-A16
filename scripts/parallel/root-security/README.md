@@ -16,3 +16,7 @@ Adds source checks and a read-only root/security probe. The current feature mask
 2. SELinux remains Enforcing.
 3. SUSFS reports only features actually compiled and enabled.
 4. No root loss, bootloop, app permission regression or false hiding claim.
+
+
+## CI execution
+This pull request is configured to run the track validator and the pinned ARM64 source build. No intermediate image is intended for device flashing.
