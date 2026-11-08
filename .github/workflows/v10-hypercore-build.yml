@@ -2,7 +2,12 @@ name: V10 AY HyperCore ARM64 Build
 
 on:
   push:
-    branches: [v10-ay-hypercore, v10-3-ay-memory-engine, v10-4-schedutil-fast-up]
+    branches:
+      - v10-ay-hypercore
+      - v10-3-ay-memory-engine
+      - v10-4-schedutil-fast-up
+      - v10-parallel-*
+      - v10-final-*
   workflow_dispatch:
 
 permissions:
@@ -369,6 +374,55 @@ jobs:
           test "$(git -C kernel diff --name-only -- kernel/sched/cpufreq_schedutil.c)" = "kernel/sched/cpufreq_schedutil.c"
           git -C kernel -c core.whitespace=-blank-at-eol diff --check
 
+      - name: Run isolated parallel feature track or integration matrix
+        run: |
+          set -euo pipefail
+          ROOT="scripts/parallel"
+          mkdir -p audit
+          REPORT="audit/parallel-feature-tracks.txt"
+          : > "$REPORT"
+
+          run_track() {
+            local track="$1"
+            local dir="$ROOT/$track"
+            test -f "$dir/stage.py"
+            test -f "$dir/validate.py"
+            echo "RUN $track" | tee -a "$REPORT"
+            python3 "$dir/stage.py"
+            python3 "$dir/validate.py"
+          }
+
+          case "$GITHUB_REF_NAME" in
+            v10-parallel-integration)
+              while IFS= read -r track; do
+                [ -n "$track" ] || continue
+                if [ -d "$ROOT/$track" ]; then
+                  run_track "$track"
+                else
+                  echo "PENDING $track" | tee -a "$REPORT"
+                fi
+              done < "$ROOT/INTEGRATION_ORDER.txt"
+              ;;
+            v10-final-integration)
+              while IFS= read -r track; do
+                [ -n "$track" ] || continue
+                run_track "$track"
+              done < "$ROOT/INTEGRATION_ORDER.txt"
+              ;;
+            v10-parallel-*)
+              track="${GITHUB_REF_NAME#v10-parallel-}"
+              if [ "$track" = "integration" ]; then
+                echo "Integration branch handled by matrix mode"
+                exit 0
+              fi
+              run_track "$track"
+              ;;
+            *)
+              echo "No parallel feature track selected" | tee -a "$REPORT"
+              ;;
+          esac
+          git -C kernel -c core.whitespace=-blank-at-eol diff --check
+
       - name: Verify fail-closed API6 path-only source and permission contract
         run: python3 scripts/v3/validate_path_bridge.py
       - name: Compile ARM64 with official Root and isolated SUSFS path VFS hooks
@@ -522,6 +576,7 @@ jobs:
             scripts/v7/ay_v74_reclaim_probe.sh
             scripts/v9/ay_v92_power_suspend_probe.sh
             audit/v10-hypercore-build-report.txt
+            audit/parallel-feature-tracks.txt
             scripts/v10/*.py
             kernel/out/arch/arm64/boot/Image.gz
             kernel/out/arch/arm64/boot/dts/**/*.dtb
