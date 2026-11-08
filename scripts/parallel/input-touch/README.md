@@ -17,3 +17,7 @@ Adds source regression checks and a read-only device probe. Any subsequent code 
 3. No missed first touch after resume.
 4. No stuck input boost or stale DeepDoze cap.
 5. No additional periodic work or wake lock.
+
+
+## CI execution
+This pull request is configured to run the track validator and the pinned ARM64 source build. No intermediate image is intended for device flashing.
