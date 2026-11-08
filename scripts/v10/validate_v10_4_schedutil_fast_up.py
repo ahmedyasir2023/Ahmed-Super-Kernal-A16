@@ -3,7 +3,7 @@
 from pathlib import Path
 
 root = Path(__file__).resolve().parents[2]
-src = (root / "kernel/sched/cpufreq_schedutil.c").read_text()
+src = (root / "kernel/kernel/sched/cpufreq_schedutil.c").read_text()
 
 for token in (
     "#include <linux/moduleparam.h>",
