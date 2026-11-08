@@ -16,3 +16,7 @@ Adds source checks and a read-only GPU/display probe. Any tuning must be thermal
 2. No thermal limit bypass or permanent frequency pin.
 3. Frame-time p95/p99 improves under the same workload.
 4. Screen-off GPU residency returns to idle and does not increase drain.
+
+
+## CI execution
+This pull request is configured to run the track validator and the pinned ARM64 source build. No intermediate image is intended for device flashing.
