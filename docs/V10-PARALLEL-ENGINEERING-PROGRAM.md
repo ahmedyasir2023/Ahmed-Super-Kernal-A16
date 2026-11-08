@@ -75,6 +75,25 @@ Do not ask the user to flash each feature branch. First collect read-only subsys
 
 If the integrated candidate fails a gate, revert or disable only the responsible track and rebuild the candidate. Do not restart the entire project from scratch.
 
+## Active feature pull requests
+
+All ten isolated branches have been created from the same V10.4-derived integration baseline. Each currently contains a track README, a source-fingerprinting stage, a fail-closed source validator and a read-only device probe.
+
+| Track | Draft PR |
+|---|---:|
+| Power / suspend | [#24](https://github.com/ahmedyasir2023/Ahmed-Super-Kernal-A16/pull/24) |
+| Memory engine | [#25](https://github.com/ahmedyasir2023/Ahmed-Super-Kernal-A16/pull/25) |
+| Scheduler / UI | [#26](https://github.com/ahmedyasir2023/Ahmed-Super-Kernal-A16/pull/26) |
+| Input / touch | [#27](https://github.com/ahmedyasir2023/Ahmed-Super-Kernal-A16/pull/27) |
+| Storage / I/O | [#28](https://github.com/ahmedyasir2023/Ahmed-Super-Kernal-A16/pull/28) |
+| GPU / display | [#29](https://github.com/ahmedyasir2023/Ahmed-Super-Kernal-A16/pull/29) |
+| Thermal efficiency | [#30](https://github.com/ahmedyasir2023/Ahmed-Super-Kernal-A16/pull/30) |
+| Network stack | [#31](https://github.com/ahmedyasir2023/Ahmed-Super-Kernal-A16/pull/31) |
+| Root / security | [#32](https://github.com/ahmedyasir2023/Ahmed-Super-Kernal-A16/pull/32) |
+| Benchmark / release | [#33](https://github.com/ahmedyasir2023/Ahmed-Super-Kernal-A16/pull/33) |
+
+These are engineering foundations, not completed performance patches. The source-audit and device-probe layer is now present in every track. Actual subsystem changes must be added and validated in their own branch before the PR is made ready for review. Keep all PRs Draft while implementation and CI qualification are incomplete.
+
 ## Current baseline and status
 
 The feature baseline is the V10.4 source branch at commit `57355b5d2bccc47ba7e7b225ea5c96e1eddd4120`, with the parallel CI orchestration added on this branch. V10.4 is a source experiment, not a user-validated stable release. The previously user-confirmed V8 baseline and existing V9 branches are not rewritten.
