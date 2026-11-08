@@ -15,3 +15,7 @@ Adds source contracts and a read-only thermal probe. No trip point, cooling map,
 2. No thermal disable/bypass or forced high-frequency state.
 3. Sustained performance and temperature are measured together.
 4. Battery and surface-temperature behavior do not regress.
+
+
+## CI execution
+This pull request is configured to run the track validator and the pinned ARM64 source build. No intermediate image is intended for device flashing.
