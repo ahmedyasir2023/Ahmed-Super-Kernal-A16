@@ -32,7 +32,7 @@ jobs:
           for script in scripts/v2/integrate_root.sh scripts/v3/stage_api6_susfs_core.sh scripts/v3/build_api6_susfs_core.sh; do
             bash -n "$script"
           done
-          python3 -m py_compile scripts/v2/manual_hooks.py scripts/prepare_ksu_legacy.py scripts/port_susfs_patch.py scripts/verify_boot_dtb.py scripts/v3/patch_api6_susfs_logging.py scripts/v3/patch_api6_susfs_uname.py scripts/v3/patch_api6_susfs_appstate.py scripts/v3/patch_api6_susfs_path.py scripts/v3/validate_path_bridge.py scripts/v4/patch_dt2w_default.py scripts/v5/patch_ay_input_boost.py scripts/v5/validate_ay_input_boost.py scripts/v6/patch_screen_wake_boost.py scripts/v6/validate_screen_wake_boost.py scripts/v7/patch_deepdoze_600s.py scripts/v7/validate_deepdoze_600s.py scripts/v7/patch_v7_1_wake_race.py scripts/v7/validate_v7_1_wake_race.py scripts/v7/preflash_audit.py scripts/v7/patch_v7_1_1_panel_state.py scripts/v7/validate_v7_1_1_panel_state.py scripts/v7/patch_v7_2_zram_mmstat.py scripts/v7/validate_v7_2_zram_mmstat.py scripts/v7/patch_v7_2_boost_lock.py scripts/v7/validate_v7_2_boost_lock.py scripts/v7/patch_v7_3_kswapd_hotplug.py scripts/v7/validate_v7_3_kswapd_hotplug.py scripts/v7/validate_v7_3_idlesafe.py scripts/v7/patch_v7_4_zram_dedup_account.py scripts/v7/validate_v7_4_zram_dedup_account.py scripts/v7/patch_v7_5_reclaim_progress.py scripts/v7/validate_v7_5_reclaim_progress.py scripts/v7/patch_v7_6_reclaim_observability.py scripts/v7/validate_v7_6_reclaim_observability.py scripts/v7/patch_v7_7_reclaim_ab_guarded.py scripts/v7/validate_v7_7_reclaim_ab_guarded.py scripts/v8/patch_v8_hyperspeed.py scripts/v8/validate_v8_hyperspeed.py scripts/v8/patch_v8_1_ultrasmooth.py scripts/v8/validate_v8_1_ultrasmooth.py scripts/v9/patch_v9_foreground_smooth.py scripts/v9/validate_v9_foreground_smooth.py scripts/v9/patch_v9_1_bounded_reclaim.py scripts/v9/validate_v9_1_bounded_reclaim.py scripts/v9/patch_v9_2_power_suspend_telemetry.py scripts/v9/validate_v9_2_power_suspend_telemetry.py scripts/v9/patch_v9_2_deepdoze_boottime.py scripts/v9/validate_v9_2_deepdoze_boottime.py scripts/v10/patch_v10_boost_fastpath.py scripts/v10/validate_v10_boost_fastpath.py scripts/v10/patch_v10_policy_dedup.py scripts/v10/validate_v10_policy_dedup.py scripts/v10/patch_v10_3_memory_efficiency.py scripts/v10/validate_v10_3_memory_efficiency.py
+          python3 -m py_compile scripts/v2/manual_hooks.py scripts/prepare_ksu_legacy.py scripts/port_susfs_patch.py scripts/verify_boot_dtb.py scripts/v3/patch_api6_susfs_logging.py scripts/v3/patch_api6_susfs_uname.py scripts/v3/patch_api6_susfs_appstate.py scripts/v3/patch_api6_susfs_path.py scripts/v3/validate_path_bridge.py scripts/v4/patch_dt2w_default.py scripts/v5/patch_ay_input_boost.py scripts/v5/validate_ay_input_boost.py scripts/v6/patch_screen_wake_boost.py scripts/v6/validate_screen_wake_boost.py scripts/v7/patch_deepdoze_600s.py scripts/v7/validate_deepdoze_600s.py scripts/v7/patch_v7_1_wake_race.py scripts/v7/validate_v7_1_wake_race.py scripts/v7/preflash_audit.py scripts/v7/patch_v7_1_1_panel_state.py scripts/v7/validate_v7_1_1_panel_state.py scripts/v7/patch_v7_2_zram_mmstat.py scripts/v7/validate_v7_2_zram_mmstat.py scripts/v7/patch_v7_2_boost_lock.py scripts/v7/validate_v7_2_boost_lock.py scripts/v7/patch_v7_3_kswapd_hotplug.py scripts/v7/validate_v7_3_kswapd_hotplug.py scripts/v7/validate_v7_3_idlesafe.py scripts/v7/patch_v7_4_zram_dedup_account.py scripts/v7/validate_v7_4_zram_dedup_account.py scripts/v7/patch_v7_5_reclaim_progress.py scripts/v7/validate_v7_5_reclaim_progress.py scripts/v7/patch_v7_6_reclaim_observability.py scripts/v7/validate_v7_6_reclaim_observability.py scripts/v7/patch_v7_7_reclaim_ab_guarded.py scripts/v7/validate_v7_7_reclaim_ab_guarded.py scripts/v8/patch_v8_hyperspeed.py scripts/v8/validate_v8_hyperspeed.py scripts/v8/patch_v8_1_ultrasmooth.py scripts/v8/validate_v8_1_ultrasmooth.py scripts/v9/patch_v9_foreground_smooth.py scripts/v9/validate_v9_foreground_smooth.py scripts/v9/patch_v9_1_bounded_reclaim.py scripts/v9/validate_v9_1_bounded_reclaim.py scripts/v9/patch_v9_2_power_suspend_telemetry.py scripts/v9/validate_v9_2_power_suspend_telemetry.py scripts/v9/patch_v9_2_deepdoze_boottime.py scripts/v9/validate_v9_2_deepdoze_boottime.py scripts/v10/patch_v10_boost_fastpath.py scripts/v10/validate_v10_boost_fastpath.py scripts/v10/patch_v10_policy_dedup.py scripts/v10/validate_v10_policy_dedup.py scripts/v10/patch_v10_3_memory_efficiency.py scripts/v10/validate_v10_3_memory_efficiency.py scripts/v10/patch_v10_4_schedutil_fast_up.py scripts/v10/validate_v10_4_schedutil_fast_up.py
           sh -n scripts/v7/ay_v74_reclaim_probe.sh
           sh -n scripts/v9/ay_v92_power_suspend_probe.sh
           echo 'Bash and Python source syntax checks passed'
@@ -351,6 +351,22 @@ jobs:
           python3 scripts/v7/validate_deepdoze_600s.py
           # V10.3 must only change mm/vmscan.c; CPU, touch, DT2W and DTB stay pinned.
           test "$(git -C kernel diff --name-only -- mm/vmscan.c)" = "mm/vmscan.c"
+          git -C kernel -c core.whitespace=-blank-at-eol diff --check
+
+      - name: V10.4 bounded schedutil upward response
+        run: |
+          set -euo pipefail
+          python3 scripts/v10/patch_v10_4_schedutil_fast_up.py
+          python3 scripts/v10/validate_v10_4_schedutil_fast_up.py
+          python3 scripts/v10/validate_v10_3_memory_efficiency.py
+          python3 scripts/v10/validate_v10_policy_dedup.py
+          python3 scripts/v10/validate_v10_boost_fastpath.py
+          python3 scripts/v9/validate_v9_2_deepdoze_boottime.py
+          python3 scripts/v9/validate_v9_2_power_suspend_telemetry.py
+          python3 scripts/v9/validate_v9_1_bounded_reclaim.py
+          python3 scripts/v8/validate_v8_1_ultrasmooth.py
+          python3 scripts/v7/validate_deepdoze_600s.py
+          test "$(git -C kernel diff --name-only -- kernel/sched/cpufreq_schedutil.c)" = "kernel/sched/cpufreq_schedutil.c"
           git -C kernel -c core.whitespace=-blank-at-eol diff --check
 
       - name: Verify fail-closed API6 path-only source and permission contract
